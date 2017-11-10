@@ -133,7 +133,7 @@
                         request("SELECT login FROM registration", []);
                         break;
                     case 42: // Запрос списка таблиц
-                        request("SELECT name_table, id FROM bind_template", []);
+                        request("SELECT name_table, id FROM bind_template", []);//SELECT name_table, id FROM `bind_template` WHERE `id` IN (SELECT table_id FROM rights WHERE login = "admin" AND rights & 1)
                         break;
                 }
             if($nQuery >= 50 && $nQuery < 100) // Работа с шаблонами и типами
@@ -175,6 +175,7 @@
                             break;   
                         case 101: // Добавление таблицы
                             request("INSERT INTO bind_template (name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms) VALUES(%s, %s, %i, %i, %s, %i, %i, %s, %s, %s)", $param);
+                            //CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
                             break;   
                         case 102: // Изменение таблицы
                             request("UPDATE bind_template SET id_parent = %i, id_parent_cell = %i, info = %s, rights = %i, _default = %i, status = %s, person = %s, terms = %s WHERE id = %i", $param);
@@ -221,13 +222,13 @@
                     switch($nQuery)
                     {
                         case 200: // Запрос списка прав
-                            request("SELECT id, table_name, login, rights FROM rights", []);
+                            request("SELECT id, table_id, login, rights FROM rights", []);
                             break;   
                         case 201: // Добавление права
-                            request("INSERT INTO rights (table_name, login, rights) VALUES(%s, %s, %i)", $param);
+                            request("INSERT INTO rights (table_id, login, rights) VALUES(%i, %s, %i)", $param);
                             break;   
                         case 202: // Изменение права
-                            request("UPDATE rights SET table_name = %s, login = %s, rights = %i WHERE id = %i", $param);
+                            request("UPDATE rights SET table_id = %i, login = %s, rights = %i WHERE id = %i", $param);
                             break;
                         case 203: // Удаление права
                             break;
