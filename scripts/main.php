@@ -133,7 +133,7 @@
                         request("SELECT login FROM registration", []);
                         break;
                     case 42: // Запрос списка таблиц
-                        request("SELECT name_table, id FROM bind_template", []);//SELECT name_table, id FROM `bind_template` WHERE `id` IN (SELECT table_id FROM rights WHERE login = "admin" AND rights & 1)
+                        request("SELECT name_table, id FROM bind_template", []);//
                         break;
                 }
             if($nQuery >= 50 && $nQuery < 100) // Работа с шаблонами и типами
@@ -171,11 +171,37 @@
                     switch($nQuery)
                     {
                         case 100: // Запрос списка таблиц
-                            request("SELECT id, name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms FROM bind_template", []);
+                            request("SELECT id, name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms FROM bind_template WHERE id IN (SELECT table_id FROM rights WHERE login = %s AND rights & 1)", [$paramL]);
                             break;   
                         case 101: // Добавление таблицы
-                            request("INSERT INTO bind_template (name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms) VALUES(%s, %s, %i, %i, %s, %i, %i, %s, %s, %s)", $param);
-                            //CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
+                            if($result = query("SELECT fields FROM template WHERE name = %s", [$param[1]]))
+                            {
+                                $Result;
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    $Result = $row;
+                                $fields = json_decode($Result[0]);
+                            }
+                            $str = "";//PRIMARY KEY
+                            $i = 0;
+                            $l = count($fields);
+                            foreach ($fields as $value)
+                            {
+                                if($i != 0) $str .= ", ";
+                                switch($value->type)
+                                {
+                                    case "INT":
+                                    case "DOUBLE":
+                                        $str .= "f_$i ".$value->type."(11)";
+                                        break;
+                                    default:
+                                        $str .= "f_$i  VARCHAR(2048)";
+                                        break;
+                                }
+                                $i++;
+                            }
+                            query("INSERT INTO bind_template (name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms) VALUES(%s, %s, %i, %i, %s, %i, %i, %s, %s, %s)", $param);
+                            $id =  $mysqli->insert_id;
+                            query("CREATE TABLE table_$id ($str)", []);
                             break;   
                         case 102: // Изменение таблицы
                             request("UPDATE bind_template SET id_parent = %i, id_parent_cell = %i, info = %s, rights = %i, _default = %i, status = %s, person = %s, terms = %s WHERE id = %i", $param);
