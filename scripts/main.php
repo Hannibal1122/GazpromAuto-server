@@ -181,7 +181,7 @@
                                     $Result = $row;
                                 $fields = json_decode($Result[0]);
                             }
-                            $str = "";//PRIMARY KEY
+                            $str = "id int NOT NULL AUTO_INCREMENT,";
                             $i = 0;
                             $l = count($fields);
                             foreach ($fields as $value)
@@ -199,15 +199,82 @@
                                 }
                                 $i++;
                             }
+                            $str .= ", PRIMARY KEY (id)";
                             query("INSERT INTO bind_template (name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms) VALUES(%s, %s, %i, %i, %s, %i, %i, %s, %s, %s)", $param);
                             $id =  $mysqli->insert_id;
                             query("CREATE TABLE table_$id ($str)", []);
+                            query("INSERT INTO rights (table_id, login, rights) VALUES(%i, %s, %i)", [$id, $paramL, 15]);
                             break;   
                         case 102: // Изменение таблицы
                             request("UPDATE bind_template SET id_parent = %i, id_parent_cell = %i, info = %s, rights = %i, _default = %i, status = %s, person = %s, terms = %s WHERE id = %i", $param);
                             /* request("UPDATE rights SET table_name = %s, login = %s, rights = %i WHERE id = %i", $param); */
                             break;
                         case 103: // Удаление таблицы
+                            break;
+                        case 104: // Загрузка таблицы
+                            $id = (int)($param[0]);
+                            $Head = [];
+                            $Template = [];
+                            $Table = [];
+                            $Type = [];
+                            if($result = query("SELECT * FROM table_$id", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $Table[] = $row;
+                            if($result = query("SELECT * FROM bind_template WHERE id = %i", [$id]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $Head = $row;
+                            if($result = query("SELECT * FROM template WHERE name = %s", [$Head[2]]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $Template = $row;
+                            $types = json_decode($Template[3]);
+                            $c = count($types);
+                            $value = [];
+                            $col_name = "";
+                            $k = 0;
+                            for($i = 0; $i < $c; $i++)
+                                if($types[$i]->type != "INT" && $types[$i]->type != "VARCHAR" && $types[$i]->type != "DOUBLE")
+                                {
+                                    if($k++ > 0) $col_name .= ",";
+                                    $value[] = $types[$i]->type;
+                                    $col_name .= "%s";
+                                }
+                            if($col_name != "")
+                            if($result = query("SELECT * FROM type WHERE name IN ($col_name)", $value))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $Type[$row[0]] = $row;
+                            echo json_encode(["head" => $Head, "data" => $Table, "template" => $Template, "type" => $Type]);
+                            break;
+                        case 105: // Добавление строк в таблицу
+                            $id = (int)($param[0]);
+                            $value = "";
+                            $col_name = "";
+                            $i = 0;
+                            if($result = query("SHOW COLUMNS FROM table_$id", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    if($i > 1) 
+                                    {
+                                        $value .= ",";
+                                        $col_name .= ",";
+                                    }
+                                    if($i > 0) 
+                                    {
+                                        $value .= "''";
+                                        $col_name .= $row[0];
+                                    }
+                                    $i++;
+                                }
+                            for($i = 0; $i < (int)$param[1]; $i++)
+                                query("INSERT INTO table_$id ($col_name) VALUES($value)", []);
+                            break;
+                        case 106: // Обновление таблицы
+                            $id = (int)($param[0]);
+                            $col_name = "";
+                            $i = 0;
+                            if($result = query("SHOW COLUMNS FROM table_$id", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    if($i > 1) $col_name .= ",";
+                                    if($i > 0) $col_name .= $row[0]." = ".(strripos($row[1], "int") === false ? "%s" : "%i");
+                                    $i++;
+                                }
+                            query("UPDATE table_$id SET $col_name WHERE id = %i", $param[2]);
                             break;
                     }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями

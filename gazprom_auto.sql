@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Время создания: Ноя 15 2017 г., 15:23
+-- Время создания: Ноя 17 2017 г., 13:05
 -- Версия сервера: 10.1.28-MariaDB
 -- Версия PHP: 7.1.10
 
@@ -50,7 +50,9 @@ INSERT INTO `bind_template` (`id`, `name_table`, `name_template`, `id_parent`, `
 (1, 'УСО ПЭБ', 'УСО/ШУ', -1, -1, '', 0, 0, '', 'Не выбран', ''),
 (2, 'АСУЭ.021.УСО', 'Шкаф', -1, -1, '', 0, 0, '', 'Не выбран', ''),
 (3, 'BR (ПЛК RX3i)', 'Устройство', -1, -1, '', 0, 0, '', 'Не выбран', ''),
-(4, 'BR1 (БП 16 RX3i)', 'Плата', -1, -1, '', 0, 0, '', 'Не выбран', '');
+(4, 'BR1 (БП 16 RX3i)', 'Плата', -1, -1, '', 0, 0, '', 'Не выбран', ''),
+(5, 'Name1', 'Шкаф', -1, -1, '', 0, 0, '', 'Не выбран', ''),
+(7, 'Моя таблица', 'Устройство', -1, -1, '', 0, 0, '', 'Не выбран', '');
 
 -- --------------------------------------------------------
 
@@ -70,7 +72,7 @@ CREATE TABLE `password` (
 INSERT INTO `password` (`login`, `hash`) VALUES
 ('admin', '$2a$10$255bb543b1626576824ccORRjxiJk0TEDxSHoX.RLWn1kw69cNKgm'),
 ('ya.pechenko92@gmail.com', '$2a$10$4d86aed8e94f7c27730a1OYf1zo1OjJDhPfMmlXT8Cdm8/B3iGLeu'),
-('admin2', '$2a$10$89767a74a40b57b93228cuHMn22SbHRSkqC5B/zx63ifa01lK3GF.');
+('admin2', '$2a$10$40bde076522466bae6f39uAG.AbJOzdgc.lIanuOCTKTtvyv50Yuu');
 
 -- --------------------------------------------------------
 
@@ -113,10 +115,13 @@ CREATE TABLE `rights` (
 --
 
 INSERT INTO `rights` (`id`, `table_id`, `login`, `rights`) VALUES
-(1, 1, 'admin', 1),
+(1, 1, 'admin', 15),
 (2, 2, 'admin', 1),
 (3, 3, 'admin', 1),
-(4, 4, 'admin', 1);
+(4, 4, 'admin', 1),
+(5, 5, 'admin', 1),
+(6, 7, 'admin', 15),
+(7, 8, 'admin', 15);
 
 -- --------------------------------------------------------
 
@@ -159,7 +164,7 @@ CREATE TABLE `signin` (
 --
 
 INSERT INTO `signin` (`id`, `login`, `checkkey`, `countreg`, `captcha`, `date`) VALUES
-('GNo8pNbvRww', 'admin', 'bc3128d1b2886a7eb99138ff80dd4ba1', 0, '', '2017-11-15 15:10:03');
+('GNo8pNbvRww', 'admin', '4c5c9925bc681f53746178b565958202', 0, '', '2017-11-17 13:02:54');
 
 -- --------------------------------------------------------
 
@@ -168,9 +173,30 @@ INSERT INTO `signin` (`id`, `login`, `checkkey`, `countreg`, `captcha`, `date`) 
 --
 
 CREATE TABLE `table_1` (
+  `id` int(11) NOT NULL,
   `f_0` varchar(2048) DEFAULT NULL,
   `f_1` varchar(2048) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Дамп данных таблицы `table_1`
+--
+
+INSERT INTO `table_1` (`id`, `f_0`, `f_1`) VALUES
+(1, '1', '2'),
+(2, '3', '4'),
+(3, '1', '2'),
+(4, '3', '4'),
+(5, '', ''),
+(6, '', ''),
+(7, '', ''),
+(8, '', ''),
+(9, '', ''),
+(10, '', ''),
+(11, '', ''),
+(12, '', ''),
+(13, '', ''),
+(14, '', '');
 
 -- --------------------------------------------------------
 
@@ -179,6 +205,7 @@ CREATE TABLE `table_1` (
 --
 
 CREATE TABLE `table_2` (
+  `id` int(11) NOT NULL,
   `f_0` varchar(2048) DEFAULT NULL,
   `f_1` varchar(2048) DEFAULT NULL,
   `f_2` int(11) DEFAULT NULL
@@ -191,6 +218,7 @@ CREATE TABLE `table_2` (
 --
 
 CREATE TABLE `table_3` (
+  `id` int(11) NOT NULL,
   `f_0` varchar(2048) DEFAULT NULL,
   `f_1` varchar(2048) DEFAULT NULL,
   `f_2` varchar(2048) DEFAULT NULL,
@@ -204,11 +232,72 @@ CREATE TABLE `table_3` (
 --
 
 CREATE TABLE `table_4` (
+  `id` int(11) NOT NULL,
   `f_0` varchar(2048) DEFAULT NULL,
   `f_1` varchar(2048) DEFAULT NULL,
   `f_2` varchar(2048) DEFAULT NULL,
   `f_3` varchar(2048) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `table_5`
+--
+
+CREATE TABLE `table_5` (
+  `id` int(11) NOT NULL,
+  `f_0` varchar(2048) DEFAULT NULL,
+  `f_1` varchar(2048) DEFAULT NULL,
+  `f_2` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Дамп данных таблицы `table_5`
+--
+
+INSERT INTO `table_5` (`id`, `f_0`, `f_1`, `f_2`) VALUES
+(1, '', '', 0),
+(2, '', '', 0),
+(3, '', '', 9),
+(4, '', '', 2),
+(5, '', '', 8),
+(6, '', '', 7),
+(7, '', '', 6),
+(8, '', '', 3),
+(9, '', '', 5),
+(10, '', '', 4),
+(11, '', '', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `table_7`
+--
+
+CREATE TABLE `table_7` (
+  `id` int(11) NOT NULL,
+  `f_0` varchar(2048) DEFAULT NULL,
+  `f_1` varchar(2048) DEFAULT NULL,
+  `f_2` varchar(2048) DEFAULT NULL,
+  `f_3` varchar(2048) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Дамп данных таблицы `table_7`
+--
+
+INSERT INTO `table_7` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
+(1, 'asd', 'asd', 'asd', ''),
+(2, 'asd', 'as', 'asd', 'asd'),
+(3, 'asd', 'sad', 'asdasd', ''),
+(4, 'asd', 'asd', '', ''),
+(5, 'asd', 'asd', '', ''),
+(6, 'asd', 'asd', 'asd', ''),
+(7, 'asd', 'asd', 'asd', ''),
+(8, '', 'asd', 'asd', ''),
+(9, '', 'asd', 'asd', ''),
+(10, '', 'asd', 'ads', '');
 
 -- --------------------------------------------------------
 
@@ -294,6 +383,42 @@ ALTER TABLE `signin`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Индексы таблицы `table_1`
+--
+ALTER TABLE `table_1`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `table_2`
+--
+ALTER TABLE `table_2`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `table_3`
+--
+ALTER TABLE `table_3`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `table_4`
+--
+ALTER TABLE `table_4`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `table_5`
+--
+ALTER TABLE `table_5`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `table_7`
+--
+ALTER TABLE `table_7`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Индексы таблицы `template`
 --
 ALTER TABLE `template`
@@ -313,19 +438,55 @@ ALTER TABLE `type`
 -- AUTO_INCREMENT для таблицы `bind_template`
 --
 ALTER TABLE `bind_template`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT для таблицы `rights`
 --
 ALTER TABLE `rights`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT для таблицы `roles`
 --
 ALTER TABLE `roles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT для таблицы `table_1`
+--
+ALTER TABLE `table_1`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT для таблицы `table_2`
+--
+ALTER TABLE `table_2`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `table_3`
+--
+ALTER TABLE `table_3`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `table_4`
+--
+ALTER TABLE `table_4`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `table_5`
+--
+ALTER TABLE `table_5`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT для таблицы `table_7`
+--
+ALTER TABLE `table_7`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
