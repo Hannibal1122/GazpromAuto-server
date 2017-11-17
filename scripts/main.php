@@ -122,7 +122,7 @@
         {
             if($result = query("SELECT rights FROM roles WHERE id IN (SELECT role FROM registration WHERE login = %s)", [$paramL]))
                 while ($row = $result->fetch_array(MYSQLI_NUM)) $rights = (int)$row[0];
-            $out_rights = recodeRights($rights);
+            $out_rights = recodeRights($rights, 5);
             if($nQuery >= 40 && $nQuery < 50)
                 switch($nQuery)
                 {
@@ -217,6 +217,8 @@
                             $Template = [];
                             $Table = [];
                             $Type = [];
+                            $Rights = getRightsForTable($paramL, $id);
+                            if($Rights[0] == 0) { echo json_encode([-1]); break; }
                             if($result = query("SELECT * FROM table_$id", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Table[] = $row;
                             if($result = query("SELECT * FROM bind_template WHERE id = %i", [$id]))
@@ -238,13 +240,14 @@
                             if($col_name != "")
                             if($result = query("SELECT * FROM type WHERE name IN ($col_name)", $value))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Type[$row[0]] = $row;
-                            echo json_encode(["head" => $Head, "data" => $Table, "template" => $Template, "type" => $Type]);
+                            echo json_encode(["head" => $Head, "data" => $Table, "template" => $Template, "type" => $Type, "rights" => $Rights]);
                             break;
                         case 105: // Добавление строк в таблицу
                             $id = (int)($param[0]);
                             $value = "";
                             $col_name = "";
                             $i = 0;
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
                             if($result = query("SHOW COLUMNS FROM table_$id", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) 
                                 {
@@ -267,6 +270,7 @@
                             $id = (int)($param[0]);
                             $col_name = "";
                             $i = 0;
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
                             if($result = query("SHOW COLUMNS FROM table_$id", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) 
                                 {
@@ -355,19 +359,29 @@
 			if($array[$i] == $login) return json_encode(["yes"]);
 		return json_encode(["no"]);
     }
-    function recodeRights($_rights)
+    function recodeRights($_rights, $n)
     {
         $out = [];
-        $rights = $_rights;
-        $out[] = $rights & 1;       // Шаблоны и типы 
-        $rights = $rights >> 1;
-        $out[] = $rights & 1;       // Таблицы 
-        $rights = $rights >> 1;
-        $out[] = $rights & 1;       // Пользователи и роли  
-        $rights = $rights >> 1;
-        $out[] = $rights & 1;       // Права 
-        $rights = $rights >> 1;
-        $out[] = $rights & 1;       // События
+        for($i = 0; $i < $n; $i++)
+        {
+            $out[] = $_rights & 1;  
+            $_rights >>= 1;
+        }
         return $out;
+    }
+    function checkRightsForTable($i, $login, $id)
+    {
+        $Rights = getRightsForTable($login, $id);
+        if($Rights[$i] == 0) return false;
+        return true;
+    }
+    function getRightsForTable($login, $id)
+    {
+        $Rights = [];
+        if($result = query("SELECT rights FROM rights WHERE login = %s AND table_id = %i", [$login, $id]))
+            while($row = $result->fetch_array(MYSQLI_NUM)) 
+                $Rights = (int)$row[0];
+        $Rights = recodeRights($Rights, 4);
+        return $Rights;
     }
 ?>				
