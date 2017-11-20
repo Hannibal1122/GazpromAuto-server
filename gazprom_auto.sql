@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Время создания: Ноя 17 2017 г., 13:05
+-- Время создания: Ноя 20 2017 г., 08:03
 -- Версия сервера: 10.1.28-MariaDB
 -- Версия PHP: 7.1.10
 
@@ -116,12 +116,12 @@ CREATE TABLE `rights` (
 
 INSERT INTO `rights` (`id`, `table_id`, `login`, `rights`) VALUES
 (1, 1, 'admin', 15),
-(2, 2, 'admin', 1),
-(3, 3, 'admin', 1),
-(4, 4, 'admin', 1),
-(5, 5, 'admin', 1),
-(6, 7, 'admin', 15),
-(7, 8, 'admin', 15);
+(2, 2, 'admin', 3),
+(3, 3, 'admin', 3),
+(4, 4, 'admin', 3),
+(5, 5, 'admin', 0),
+(6, 7, 'admin', 0),
+(7, 7, 'admin2', 0);
 
 -- --------------------------------------------------------
 
@@ -164,7 +164,7 @@ CREATE TABLE `signin` (
 --
 
 INSERT INTO `signin` (`id`, `login`, `checkkey`, `countreg`, `captcha`, `date`) VALUES
-('GNo8pNbvRww', 'admin', '4c5c9925bc681f53746178b565958202', 0, '', '2017-11-17 13:02:54');
+('GNo8pNbvRww', 'admin', '4c5c9925bc681f53746178b565958202', 0, '', '2017-11-20 07:47:03');
 
 -- --------------------------------------------------------
 
@@ -211,6 +211,22 @@ CREATE TABLE `table_2` (
   `f_2` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Дамп данных таблицы `table_2`
+--
+
+INSERT INTO `table_2` (`id`, `f_0`, `f_1`, `f_2`) VALUES
+(1, '', '', 0),
+(2, '', '', 0),
+(3, '', '', 0),
+(4, '', '', 0),
+(5, '', '', 0),
+(6, '', '', 0),
+(7, '', '', 0),
+(8, '', '', 0),
+(9, '', '', 0),
+(10, '', '', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -225,6 +241,22 @@ CREATE TABLE `table_3` (
   `f_3` varchar(2048) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Дамп данных таблицы `table_3`
+--
+
+INSERT INTO `table_3` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
+(1, '', '', '', ''),
+(2, '', '', '', ''),
+(3, '', '', '', ''),
+(4, '', '', '', ''),
+(5, '', '', '', ''),
+(6, '', '', '', ''),
+(7, '', '', '', ''),
+(8, '', '', '', ''),
+(9, '', '', '', ''),
+(10, '', '', '', '');
+
 -- --------------------------------------------------------
 
 --
@@ -238,6 +270,22 @@ CREATE TABLE `table_4` (
   `f_2` varchar(2048) DEFAULT NULL,
   `f_3` varchar(2048) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Дамп данных таблицы `table_4`
+--
+
+INSERT INTO `table_4` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
+(1, '', '', '', ''),
+(2, '', '', '', ''),
+(3, '', '', '', ''),
+(4, '', '', '', ''),
+(5, '', '', '', ''),
+(6, '', '', '', ''),
+(7, '', '', '', ''),
+(8, '', '', '', ''),
+(9, '', '', '', ''),
+(10, '', '', '', '');
 
 -- --------------------------------------------------------
 
@@ -289,12 +337,12 @@ CREATE TABLE `table_7` (
 
 INSERT INTO `table_7` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
 (1, 'asd', 'asd', 'asd', ''),
-(2, 'asd', 'as', 'asd', 'asd'),
+(2, 'asd', 'asqwe', 'asd', 'asd'),
 (3, 'asd', 'sad', 'asdasd', ''),
 (4, 'asd', 'asd', '', ''),
 (5, 'asd', 'asd', '', ''),
 (6, 'asd', 'asd', 'asd', ''),
-(7, 'asd', 'asd', 'asd', ''),
+(7, 'asd', 'asdqweqwe', 'asd', ''),
 (8, '', 'asd', 'asd', ''),
 (9, '', 'asd', 'asd', ''),
 (10, '', 'asd', 'ads', '');
@@ -462,19 +510,19 @@ ALTER TABLE `table_1`
 -- AUTO_INCREMENT для таблицы `table_2`
 --
 ALTER TABLE `table_2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT для таблицы `table_3`
 --
 ALTER TABLE `table_3`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT для таблицы `table_4`
 --
 ALTER TABLE `table_4`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT для таблицы `table_5`

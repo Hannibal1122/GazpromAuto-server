@@ -1,5 +1,6 @@
 <?php 
-	$_PATH = "E:/Work/GazpromAuto/";
+	/* $_PATH = "E:/Work/GazpromAuto/"; */
+	$_PATH = "E:/Projects/GazpromAuto/";
 	$_main = array(
 		"name" => "main",
 		"data" => array(
@@ -59,17 +60,17 @@
 		$array = file("version/".$nameFile.'.ver'); // построчный разбор файла с хэш-функциями
 		$time_str = explode(".", $array[0]); // разбор текущей версии
 		$change_files = array(); // Измененные файлы
-
-		for ($i = 0; $i < count($hash); $i++)
-		{
-			$hash_time = hash_file("md5", $hash[$i]); // хэш-фукнция файла
-			if (isset($array[$i + 1]) && strripos($array[$i + 1], $hash_time) === false) 
-			{
-				array_push($change_files, $i);
-				$v++;
-			}
-			$str2 .= "\n".$hash_time;
-		}
+        if(!file_exists("version/noncontrol.ver"))
+            for ($i = 0; $i < count($hash); $i++)
+            {
+                $hash_time = hash_file("md5", $hash[$i]); // хэш-фукнция файла
+                if (isset($array[$i + 1]) && strripos($array[$i + 1], $hash_time) === false) 
+                {
+                    array_push($change_files, $i);
+                    $v++;
+                }
+                $str2 .= "\n".$hash_time;
+            }
 		$time_str[2] = (int)$time_str[2] + $v;
 		if ($time_str[2] >= 1000) // формирование версии
 		{
