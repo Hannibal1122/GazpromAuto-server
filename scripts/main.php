@@ -44,7 +44,7 @@
     if($nQuery < 50)
         switch($nQuery)
         {
-            case 0:
+            case 0: // Запрос версии
                 include("./version/versions.php");
                 $project = [];	
                 $project['main'] = getVersion(		$_main["name"], 		$_main["data"]);
@@ -52,20 +52,14 @@
                 echo json_encode($project);
                 break;
             case 1: // Возвращает информацию о текущем пользователе
-            {
                 request("SELECT * FROM signin WHERE id = %s", [$paramI]);
                 break;
-            }
             case 2: // Фиксирует вход на сайт нового пользователя
-            {
                 query("INSERT INTO signin VALUES(%s, %s, %s, %i, %s, %s)", $param);
                 break;
-            }
             case 3: // Обновление времени нахождения пользователя на сайте
-            {
                 query("UPDATE signin SET date = %s WHERE id = %s", $param);
                 break;
-            }
             case 4: // вход
                 require_once("enter.php");
                 break;
@@ -88,13 +82,8 @@
             case 7: // Очищает логин и ключ при выходе пользователя с сайта
                 query("UPDATE signin SET checkkey = '', login = '' WHERE id = %s", [$paramC]);
                 break;
-            /* case 8: // Запуск скрипта регистрации
-            {
-                require_once("registration.php"); 
-                break;
-            } */
+  
             case 9: // Проверка правильности введенного логина
-            {
                 $login = $paramL;
                 $array = [];
                 $j = 0;
@@ -107,7 +96,6 @@
                         }
                 echo checkL($array, $login);
                 break;
-            }
             
         }
     if($nQuery >= 40) // Требуется логин
@@ -133,7 +121,7 @@
                         request("SELECT login FROM registration", []);
                         break;
                     case 42: // Запрос списка таблиц
-                        request("SELECT name_table, id FROM bind_template", []);//
+                        request("SELECT name_table, id FROM table_big", []);//
                         break;
                 }
             if($nQuery >= 50 && $nQuery < 100) // Работа с шаблонами и типами
@@ -165,15 +153,10 @@
                         case 58: // Запрос списка шаблонов
                             request("SELECT name, status FROM template", []);
                             break;  
-                    }
-            if($nQuery >= 100 && $nQuery < 150) // Работа с Таблицами
-                if($out_rights[1])
-                    switch($nQuery)
-                    {
-                        case 100: // Запрос списка таблиц
-                            request("SELECT id, name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms FROM bind_template WHERE id IN (SELECT table_id FROM rights WHERE login = %s AND rights & 1)", [$paramL]);
-                            break;   
-                        case 101: // Добавление таблицы
+                        case 59: // Запрос списка таблиц
+                            request("SELECT id, name_table, name_template, info, rights FROM table_initialization", []);
+                            break; 
+                        case 60: // Добавление таблицы
                             if($result = query("SELECT fields FROM template WHERE name = %s", [$param[1]]))
                             {
                                 $Result;
@@ -194,34 +177,30 @@
                                         $str .= "f_$i ".$value->type."(11)";
                                         break;
                                     default:
-                                        $str .= "f_$i  VARCHAR(2048)";
+                                        $str .= "f_$i  VARCHAR(256)";
                                         break;
                                 }
                                 $i++;
                             }
                             $str .= ", PRIMARY KEY (id)";
-                            query("INSERT INTO bind_template (name_table, name_template, id_parent, id_parent_cell, info, rights, _default, status, person, terms) VALUES(%s, %s, %i, %i, %s, %i, %i, %s, %s, %s)", $param);
+                            query("INSERT INTO table_initialization (name_table, name_template, info, rights) VALUES(%s, %s, %s, %i)", $param);
                             $id =  $mysqli->insert_id;
-                            query("CREATE TABLE table_$id ($str)", []);
-                            query("INSERT INTO rights (table_id, login, rights) VALUES(%i, %s, %i)", [$id, $paramL, 15]);
+                            query("CREATE TABLE table_init_$id ($str)", []);
                             break;   
-                        case 102: // Изменение таблицы
-                            request("UPDATE bind_template SET id_parent = %i, id_parent_cell = %i, info = %s, rights = %i, _default = %i, status = %s, person = %s, terms = %s WHERE id = %i", $param);
-                            /* request("UPDATE rights SET table_name = %s, login = %s, rights = %i WHERE id = %i", $param); */
+                        case 61: // Изменение таблицы
+                            request("UPDATE table_initialization SET info = %s, rights = %i WHERE id = %i", $param);
                             break;
-                        case 103: // Удаление таблицы
+                        case 62: // Удаление таблицы
                             break;
-                        case 104: // Загрузка таблицы
+                        case 63: // Загрузка таблицы
                             $id = (int)($param[0]);
                             $Head = [];
                             $Template = [];
                             $Table = [];
                             $Type = [];
-                            $Rights = getRightsForTable($paramL, $id);
-                            if($Rights[0] == 0) { echo json_encode([-1]); break; }
-                            if($result = query("SELECT * FROM table_$id", []))
+                            if($result = query("SELECT * FROM table_init_$id", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Table[] = $row;
-                            if($result = query("SELECT * FROM bind_template WHERE id = %i", [$id]))
+                            if($result = query("SELECT * FROM table_initialization WHERE id = %i", [$id]))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Head = $row;
                             if($result = query("SELECT * FROM template WHERE name = %s", [$Head[2]]))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Template = $row;
@@ -240,9 +219,213 @@
                             if($col_name != "")
                             if($result = query("SELECT * FROM type WHERE name IN ($col_name)", $value))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Type[$row[0]] = $row;
-                            echo json_encode(["head" => $Head, "data" => $Table, "template" => $Template, "type" => $Type, "rights" => $Rights]);
+                            echo json_encode(["head" => $Head, "data" => $Table, "template" => $Template, "type" => $Type, "rights" => [15]]);
+                            break;
+                        case 64: // Добавление строк в таблицу
+                            $id = (int)($param[0]);
+                            $value = "";
+                            $col_name = "";
+                            $i = 0;
+                            if($result = query("SHOW COLUMNS FROM table_init_$id", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    if($i > 1) 
+                                    {
+                                        $value .= ",";
+                                        $col_name .= ",";
+                                    }
+                                    if($i > 0) 
+                                    {
+                                        $value .= "''";
+                                        $col_name .= $row[0];
+                                    }
+                                    $i++;
+                                }
+                            for($i = 0; $i < (int)$param[1]; $i++)
+                                query("INSERT INTO table_init_$id ($col_name) VALUES($value)", []);
+                            break;
+                        case 65: // Обновление таблицы
+                            $id = (int)($param[0]);
+                            $col_name = "";
+                            $i = 0;
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
+                            if($result = query("SHOW COLUMNS FROM table_init_$id", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    if($i > 1) $col_name .= ",";
+                                    if($i > 0) $col_name .= $row[0]." = ".(strripos($row[1], "int") === false ? "%s" : "%i");
+                                    $i++;
+                                }
+                            query("UPDATE table_init_$id SET $col_name WHERE id = %i", $param[2]);
+                            break;
+                        case 66: // Запрос списка шаблонов группы вся информация
+                            request("SELECT name, hierarchy, rights FROM big_template", []);
+                            break;
+                        case 67: // Добавление шаблона группы
+                            request("INSERT INTO big_template (name, hierarchy) VALUES(%s, %s)", $param);
+                            break;
+                        case 68: // Изменение шаблона группы
+                            request("UPDATE big_template SET hierarchy = %s WHERE name = %s", $param);
+                            break;
+                    }
+            if($nQuery >= 100 && $nQuery < 150) // Работа с Данными
+                if($out_rights[1])
+                    switch($nQuery)
+                    {
+                        case 100: // Запрос списка таблиц
+                            request("SELECT id, name_table, name_template, info, rights FROM table_big WHERE id IN (SELECT table_id FROM rights WHERE login = %s AND rights & 1)", [$paramL]);
+                            break;   
+                        case 101: // Добавление таблицы
+                            if($result = query("SELECT hierarchy FROM big_template WHERE name = %s", [$param[1]]))
+                            {
+                                $Result;
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    $Result = $row;
+                                $hierarchy = json_decode($Result[0]);
+                            }
+                            $fields = [];
+                            $str = "";
+                            $c = count($hierarchy);
+                            for($i = 0; $i < $c; $i++)
+                            {
+                                if($i != 0) $str .= ",";
+                                $str .= "'".$hierarchy[$i]."'";
+                            }
+                            if($result = query("SELECT fields FROM template WHERE name IN ($str) ORDER BY FIELD(name, $str)", []))
+                            {
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    $fields[] = json_decode($row[0]);
+                            }
+                            $str = "id int NOT NULL AUTO_INCREMENT,";
+                            $j = 0;
+                            for($i = 0; $i < $c; $i++)
+                            {
+                                foreach ($fields[$i] as $value)
+                                {
+                                    if($j != 0) $str .= ", ";
+                                    switch($value->type)
+                                    {
+                                        case "INT":
+                                        case "DOUBLE":
+                                            $str .= "f_$j ".$value->type."(11)";
+                                            break;
+                                        default:
+                                            $str .= "f_$j  VARCHAR(256)";
+                                            break;
+                                    }
+                                    $j++;
+                                }
+                            }
+                            $str .= ", PRIMARY KEY (id)";
+                            query("INSERT INTO table_big (name_table, name_template, info, rights) VALUES(%s, %s, %s, %i)", $param);
+                            $id =  $mysqli->insert_id;
+                            echo $str;
+                            query("CREATE TABLE table_$id ($str)", []);
+                            query("INSERT INTO rights (table_id, login, rights) VALUES(%i, %s, %i)", [$id, $paramL, 15]);
+                            break;   
+                        /* case 102: // Изменение таблицы
+                            request("UPDATE bind_template SET id_parent = %i, id_parent_cell = %i, info = %s, rights = %i, _default = %i, status = %s, person = %s, terms = %s WHERE id = %i", $param);
+                            break;
+                        case 103: // Удаление таблицы
+                            break;
+                        */
+                        case 104: // Загрузка таблицы
+                            $id = (int)($param[0]);
+                            $Head = [];
+                            $Table = [];
+                            $Type = [];
+                            $Rights = getRightsForTable($paramL, $id);
+                            if($Rights[0] == 0) { echo json_encode([-1]); break; }
+                            if($result = query("SELECT * FROM table_$id ORDER by id", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $Table[] = $row;
+                            if($result = query("SELECT * FROM table_big WHERE id = %i", [$id]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $Head = $row;
+                            if($result = query("SELECT hierarchy FROM big_template WHERE name = %s", [$Head[2]]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $hierarchy = json_decode($row[0]);
+                            $fields = [];
+                            $templates = [];
+                            $str = "";
+                            $c = count($hierarchy);
+                            for($i = 0; $i < $c; $i++)
+                            {
+                                if($i != 0) $str .= ",";
+                                $str .= "'".$hierarchy[$i]."'";
+                            }
+                            if($result = query("SELECT fields, name FROM template WHERE name IN ($str) ORDER BY FIELD(name, $str)", []))
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    $fields[] = json_decode($row[0]);
+                                    $templates[] = $row[1];
+                                }
+                            $_value = [];
+                            $col_name = "";
+                            $j = 0;
+                            for($i = 0; $i < $c; $i++)
+                                foreach ($fields[$i] as $value)
+                                {
+                                    if($value->type != "INT" && $value->type != "VARCHAR" && $value->type != "DOUBLE")
+                                    {
+                                        if($j++ > 0) $col_name .= ",";
+                                        $_value[] = $value->type;
+                                        $col_name .= "%s";
+                                    }
+                                }
+                            if($col_name != "")
+                                if($result = query("SELECT * FROM type WHERE name IN ($col_name)", $_value))
+                                    while($row = $result->fetch_array(MYSQLI_NUM)) $Type[$row[0]] = $row;
+                            echo json_encode(["head" => $fields, "data" => $Table, "type" => $Type, "rights" => $Rights, "templates" => $templates]);
                             break;
                         case 105: // Добавление строк в таблицу
+                            $id = (int)($param[0]);
+                            $value = "";
+                            $col_name = "";
+                            $i = 0;
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
+                            if(array_key_exists(3, $param) && $param[3] == "remove")
+                                query("DELETE FROM table_$id WHERE id >= %i ORDER BY id LIMIT %i", [(int)$param[2], (int)$param[1]]);
+                            else
+                            {
+                                //$count = 0;
+                                /* if($result = query("SELECT COUNT(id) FROM table_$id WHERE id >= %i ORDER by id", [(int)$param[2]]))
+                                    while($row = $result->fetch_array(MYSQLI_NUM)) $count = $row[0]; */
+                                query("UPDATE table_$id SET id = id + %i WHERE id >= %i ORDER by id DESC", [(int)$param[1], (int)$param[2]]);
+                                if($result = query("SHOW COLUMNS FROM table_$id", []))
+                                    while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    {
+                                        if($i > 1) 
+                                        {
+                                            $value .= ",";
+                                            $col_name .= ",";
+                                        }
+                                        if($i > 0) 
+                                        {
+                                            $value .= "''";
+                                            $col_name .= $row[0];
+                                        }
+                                        $i++;
+                                    }
+                                for($i = 0; $i < (int)$param[1]; $i++)
+                                    query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $value)", [(int)$param[2] + $i]);
+                            }
+                            break;
+                        /*case 106: // Обновление таблицы
+                            $id = (int)($param[0]);
+                            $col_name = "";
+                            $i = 0;
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
+                            if($result = query("SHOW COLUMNS FROM table_$id", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    if($i > 1) $col_name .= ",";
+                                    if($i > 0) $col_name .= $row[0]." = ".(strripos($row[1], "int") === false ? "%s" : "%i");
+                                    $i++;
+                                }
+                            query("UPDATE table_$id SET $col_name WHERE id = %i", $param[2]);
+                            break; */
+                        case 107: // Запрос списка шаблонов группы
+                            request("SELECT name FROM big_template", []);
+                            break;
+                        /* case 108: // Удаление строк
                             $id = (int)($param[0]);
                             $value = "";
                             $col_name = "";
@@ -265,21 +448,7 @@
                                 }
                             for($i = 0; $i < (int)$param[1]; $i++)
                                 query("INSERT INTO table_$id ($col_name) VALUES($value)", []);
-                            break;
-                        case 106: // Обновление таблицы
-                            $id = (int)($param[0]);
-                            $col_name = "";
-                            $i = 0;
-                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
-                            if($result = query("SHOW COLUMNS FROM table_$id", []))
-                                while($row = $result->fetch_array(MYSQLI_NUM)) 
-                                {
-                                    if($i > 1) $col_name .= ",";
-                                    if($i > 0) $col_name .= $row[0]." = ".(strripos($row[1], "int") === false ? "%s" : "%i");
-                                    $i++;
-                                }
-                            query("UPDATE table_$id SET $col_name WHERE id = %i", $param[2]);
-                            break;
+                            break; */
                     }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями
                 if($out_rights[2])
