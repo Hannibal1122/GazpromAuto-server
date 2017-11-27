@@ -1,9 +1,9 @@
 <?php
 	$hostname = "localhost"; 
 	$username = "root";     
-	$password = "";
+	$password = "25mad92";
 	$dbName = "gazprom_auto";
-/* 	$username = "hannibal_test";     
-	$password = "@#k^{I*s";
-    $dbName = "hannibal_test"; */
+	//$username = "root";     
+	//$password = "25mad92";
+	//$dbName = "magician";
 ?>

@@ -399,7 +399,8 @@
                                         }
                                         if($i > 0) 
                                         {
-                                            $value .= "''";
+                                            if(strripos($row[1], "int") === false) $value .= "''";
+                                            else $value .= "0";
                                             $col_name .= $row[0];
                                         }
                                         $i++;
@@ -408,7 +409,7 @@
                                     query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $value)", [(int)$param[2] + $i]);
                             }
                             break;
-                        /*case 106: // Обновление таблицы
+                        case 106: // Обновление таблицы
                             $id = (int)($param[0]);
                             $col_name = "";
                             $i = 0;
@@ -421,34 +422,19 @@
                                     $i++;
                                 }
                             query("UPDATE table_$id SET $col_name WHERE id = %i", $param[2]);
-                            break; */
+                            break;
                         case 107: // Запрос списка шаблонов группы
                             request("SELECT name FROM big_template", []);
                             break;
-                        /* case 108: // Удаление строк
-                            $id = (int)($param[0]);
-                            $value = "";
-                            $col_name = "";
-                            $i = 0;
-                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
-                            if($result = query("SHOW COLUMNS FROM table_$id", []))
+                        case 108:
+                            $id_table = -1;
+                            if($result = query("SELECT id FROM table_initialization WHERE name_table = %s", $param))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) 
-                                {
-                                    if($i > 1) 
-                                    {
-                                        $value .= ",";
-                                        $col_name .= ",";
-                                    }
-                                    if($i > 0) 
-                                    {
-                                        $value .= "''";
-                                        $col_name .= $row[0];
-                                    }
-                                    $i++;
-                                }
-                            for($i = 0; $i < (int)$param[1]; $i++)
-                                query("INSERT INTO table_$id ($col_name) VALUES($value)", []);
-                            break; */
+                                    $id_table = $row[0];
+                            if($id_table != -1)
+                                request("SELECT * FROM table_init_$id_table", []);
+                            else echo json_encode(["empty"]);
+                            break;
                     }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями
                 if($out_rights[2])
