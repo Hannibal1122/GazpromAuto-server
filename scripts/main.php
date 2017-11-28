@@ -248,7 +248,7 @@
                             $id = (int)($param[0]);
                             $col_name = "";
                             $i = 0;
-                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
+                            //if(!checkRightsForTable(1, $paramL, $id)) { break; }
                             if($result = query("SHOW COLUMNS FROM table_init_$id", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) 
                                 {
@@ -380,33 +380,100 @@
                             $value = "";
                             $col_name = "";
                             $i = 0;
+                            $count_insert_fields = (int)$param[1];
+                            $id_per_insert = (int)$param[2];
                             if(!checkRightsForTable(1, $paramL, $id)) { break; }
                             if(array_key_exists(3, $param) && $param[3] == "remove")
                                 query("DELETE FROM table_$id WHERE id >= %i ORDER BY id LIMIT %i", [(int)$param[2], (int)$param[1]]);
                             else
                             {
-                                //$count = 0;
-                                /* if($result = query("SELECT COUNT(id) FROM table_$id WHERE id >= %i ORDER by id", [(int)$param[2]]))
-                                    while($row = $result->fetch_array(MYSQLI_NUM)) $count = $row[0]; */
-                                query("UPDATE table_$id SET id = id + %i WHERE id >= %i ORDER by id DESC", [(int)$param[1], (int)$param[2]]);
-                                if($result = query("SHOW COLUMNS FROM table_$id", []))
-                                    while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                if(array_key_exists(4, $param))
+                                {
+                                    $id_init_table = (int)($param[4]);
+                                    $count_columns = 0;
+                                    $j = 0;
+                                    $sql = [];
+                                    if($result = query("SELECT * FROM table_init_$id_init_table", []))
+                                        while($row = $result->fetch_array(MYSQLI_NUM))
+                                        {
+                                            $sql[$j] = [];
+                                            for($i = 1; $i < count($row); $i++)
+                                            {     
+                                                $k = (int)$param[2] + ($i - 1);
+                                                $sql[$j][$k] = "";
+                                                if($j == 0) $sql[$j][$k] .= "f_$k = '".$row[$i]."'";
+                                                else $sql[$j][$k] .= "'".$row[$i]."'";
+                                            }
+                                            $j++;
+                                        } 
+                                    $count_insert_fields = $j - 1;
+                                    $id_per_insert = (int)$param[1] + 1;
+                                    $i = 0;
+                                    $col_name = "";
+                                    if($result = query("SHOW COLUMNS FROM table_$id", []))
+                                        while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                        {
+                                            if($i > 1) $col_name .= ",";
+                                            if($i > 0)
+                                            {
+                                                for($j = 1; $j < count($sql); $j++)
+                                                    if(array_key_exists($i - 1, $sql[$j]) == false)/*  echo $sql[$j][$i - 1]."\n"; */
+                                                        if(strripos($row[1], "int") === false) $sql[$j][$i - 1] = "''";
+                                                        else $sql[$j][$i - 1] = "0";  
+                                                $col_name .= $row[0];
+                                            }
+                                            $i++;
+                                        }
+                                    $str = "";
+                                    $j = 0;
+                                    foreach ($sql[0] as $value)
                                     {
-                                        if($i > 1) 
-                                        {
-                                            $value .= ",";
-                                            $col_name .= ",";
-                                        }
-                                        if($i > 0) 
-                                        {
-                                            if(strripos($row[1], "int") === false) $value .= "''";
-                                            else $value .= "0";
-                                            $col_name .= $row[0];
-                                        }
-                                        $i++;
+                                        if($j > 0) $str .= ",";
+                                        $str .= $value;
+                                        $j++;
                                     }
-                                for($i = 0; $i < (int)$param[1]; $i++)
-                                    query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $value)", [(int)$param[2] + $i]);
+                                    query("UPDATE table_$id SET $str WHERE id = %i", [$id_per_insert]);
+                                    query("UPDATE table_$id SET id = id + %i WHERE id >= %i ORDER by id DESC", [$count_insert_fields, $id_per_insert + 1]);
+                                    $str = "";
+                                    for($i = 1; $i < count($sql); $i++)
+                                    {
+                                        $str = "";
+                                        for($j = 0; $j < count($sql[$i]); $j++)
+                                        {
+                                            if($j > 0) $str .= ",";
+                                            $str .= $sql[$i][$j];
+                                        }
+                                        query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $str)", [$id_per_insert + $i]);
+                                    }
+                                    //query("UPDATE table_$id SET $str WHERE id = %i", [(int)$param[1] + 1]);
+                                    /* print_r($count_insert_fields);
+                                    print_r($id_per_insert); */
+                                    /* print_r($sql); */
+                                    /* print_r($param); */
+                                }
+                                else
+                                {
+                                    $i = 0;
+                                    query("UPDATE table_$id SET id = id + %i WHERE id >= %i ORDER by id DESC", [$count_insert_fields, $id_per_insert]);
+                                    if($result = query("SHOW COLUMNS FROM table_$id", []))
+                                        while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                        {
+                                            if($i > 1) 
+                                            {
+                                                $value .= ",";
+                                                $col_name .= ",";
+                                            }
+                                            if($i > 0) 
+                                            {
+                                                if(strripos($row[1], "int") === false) $value .= "''";
+                                                else $value .= "0";
+                                                $col_name .= $row[0];
+                                            }
+                                            $i++;
+                                        }
+                                    for($i = 0; $i < $count_insert_fields; $i++)
+                                        query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $value)", [$id_per_insert + $i]);
+                                }
                             }
                             break;
                         case 106: // Обновление таблицы
@@ -428,12 +495,20 @@
                             break;
                         case 108:
                             $id_table = -1;
-                            if($result = query("SELECT id FROM table_initialization WHERE name_table = %s", $param))
+                            $type_table = -1;
+                            if($result = query("SELECT id, name_template FROM table_initialization WHERE name_table = %s", [$param[0]]))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
                                     $id_table = $row[0];
-                            if($id_table != -1)
-                                request("SELECT * FROM table_init_$id_table", []);
+                                    $type_table = $row[1];
+                                }
+                            if($id_table != -1 && $type_table == $param[1])
+                                echo json_encode([$id_table]);//request("SELECT * FROM table_init_$id_table", []);
                             else echo json_encode(["empty"]);
+                            break;
+                        case 109: // Автоматическое заполнение таблицы
+                            $name_table = $param[0];
+                            request("SELECT * FROM $name_table", []);
                             break;
                     }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями
