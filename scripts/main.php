@@ -191,6 +191,9 @@
                             request("UPDATE table_initialization SET info = %s, rights = %i WHERE id = %i", $param);
                             break;
                         case 62: // Удаление таблицы
+                            $id_table = (int)$param[0];
+                            query("DROP TABLE table_init_$id_table", []);
+                            query("DELETE FROM table_initialization WHERE id = %i", [$id_table]); 
                             break;
                         case 63: // Загрузка таблицы
                             $id = (int)($param[0]);
@@ -320,15 +323,19 @@
                             query("INSERT INTO table_big (name_table, name_template, info, rights) VALUES(%s, %s, %s, %i)", $param);
                             $id =  $mysqli->insert_id;
                             echo $str;
+                            query("INSERT INTO table_big_mask (id, mask) VALUES(%i, %s)", [$id, json_encode([])]);
                             query("CREATE TABLE table_$id ($str)", []);
                             query("INSERT INTO rights (table_id, login, rights) VALUES(%i, %s, %i)", [$id, $paramL, 15]);
                             break;   
                         /* case 102: // Изменение таблицы
                             request("UPDATE bind_template SET id_parent = %i, id_parent_cell = %i, info = %s, rights = %i, _default = %i, status = %s, person = %s, terms = %s WHERE id = %i", $param);
-                            break;
+                            break;*/
                         case 103: // Удаление таблицы
+                            $id_table = (int)$param[0];
+                            query("DROP TABLE table_$id_table", []);
+                            query("DELETE FROM table_big WHERE id = %i", [$id_table]);
+                            query("DELETE FROM table_big_mask WHERE id = %i", [$id_table]);
                             break;
-                        */
                         case 104: // Загрузка таблицы
                             $id = (int)($param[0]);
                             $Head = [];
@@ -373,7 +380,34 @@
                             if($col_name != "")
                                 if($result = query("SELECT * FROM type WHERE name IN ($col_name)", $_value))
                                     while($row = $result->fetch_array(MYSQLI_NUM)) $Type[$row[0]] = $row;
-                            echo json_encode(["head" => $fields, "data" => $Table, "type" => $Type, "rights" => $Rights, "templates" => $templates]);
+                            if($result = query("SELECT mask FROM table_big_mask WHERE id = %i", [$id]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $Mask = json_decode($row[0]);
+                            $Tables_init = [];
+                            $ids_for_table_init = [];
+                            $sql_for_table_init = "";
+                            foreach($Mask as $key => $value)
+                                foreach($value as $_key => $_value)
+                                {
+                                    for($i = 0; $i < count($ids_for_table_init); $i++) 
+                                        if($ids_for_table_init[$i] == $_value) break;
+                                    if($i == count($ids_for_table_init))
+                                        $ids_for_table_init[$i] = $_value;
+                                }
+                            for($i = 0; $i < count($ids_for_table_init); $i++) 
+                            {
+                                $id_init_table = $ids_for_table_init[$i];
+                                $Tables_init[$id_init_table] = [];
+                                if($result = query("SELECT * FROM table_init_$id_init_table", []))
+                                    while($row = $result->fetch_array(MYSQLI_NUM))
+                                        $Tables_init[$id_init_table][] = $row;
+                            }
+                            echo json_encode(["head" => $fields, 
+                                                "data" => $Table, 
+                                                "type" => $Type, 
+                                                "rights" => $Rights, 
+                                                "templates" => $templates, 
+                                                "mask" => $Mask, 
+                                                "init" => $Tables_init]);
                             break;
                         case 105: // Добавление строк в таблицу
                             $id = (int)($param[0]);
@@ -382,7 +416,10 @@
                             $i = 0;
                             $count_insert_fields = (int)$param[1];
                             $id_per_insert = (int)$param[2];
-                            if(!checkRightsForTable(1, $paramL, $id)) { break; }
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; };
+                            if($result = query("SELECT mask FROM table_big_mask WHERE id = %i", [$id]))
+                                while($row = $result->fetch_array(MYSQLI_NUM))
+                                    $Mask = json_decode($row[0]);
                             if(array_key_exists(3, $param) && $param[3] == "remove")
                                 query("DELETE FROM table_$id WHERE id >= %i ORDER BY id LIMIT %i", [(int)$param[2], (int)$param[1]]);
                             else
@@ -391,89 +428,41 @@
                                 {
                                     $id_init_table = (int)($param[4]);
                                     $count_columns = 0;
-                                    $j = 0;
-                                    $sql = [];
-                                    if($result = query("SELECT * FROM table_init_$id_init_table", []))
+                                    if($result = query("SELECT COUNT(*) FROM table_init_$id_init_table", []))
                                         while($row = $result->fetch_array(MYSQLI_NUM))
-                                        {
-                                            $sql[$j] = [];
-                                            for($i = 1; $i < count($row); $i++)
-                                            {     
-                                                $k = (int)$param[2] + ($i - 1);
-                                                $sql[$j][$k] = "";
-                                                if($j == 0) $sql[$j][$k] .= "f_$k = '".$row[$i]."'";
-                                                else $sql[$j][$k] .= "'".$row[$i]."'";
-                                            }
-                                            $j++;
-                                        } 
-                                    $count_insert_fields = $j - 1;
-                                    $id_per_insert = (int)$param[1] + 1;
-                                    $i = 0;
-                                    $col_name = "";
-                                    if($result = query("SHOW COLUMNS FROM table_$id", []))
-                                        while($row = $result->fetch_array(MYSQLI_NUM)) 
-                                        {
-                                            if($i > 1) $col_name .= ",";
-                                            if($i > 0)
-                                            {
-                                                for($j = 1; $j < count($sql); $j++)
-                                                    if(array_key_exists($i - 1, $sql[$j]) == false)/*  echo $sql[$j][$i - 1]."\n"; */
-                                                        if(strripos($row[1], "int") === false) $sql[$j][$i - 1] = "''";
-                                                        else $sql[$j][$i - 1] = "0";  
-                                                $col_name .= $row[0];
-                                            }
-                                            $i++;
-                                        }
-                                    $str = "";
-                                    $j = 0;
-                                    foreach ($sql[0] as $value)
-                                    {
-                                        if($j > 0) $str .= ",";
-                                        $str .= $value;
-                                        $j++;
-                                    }
-                                    query("UPDATE table_$id SET $str WHERE id = %i", [$id_per_insert]);
-                                    query("UPDATE table_$id SET id = id + %i WHERE id >= %i ORDER by id DESC", [$count_insert_fields, $id_per_insert + 1]);
-                                    $str = "";
-                                    for($i = 1; $i < count($sql); $i++)
-                                    {
-                                        $str = "";
-                                        for($j = 0; $j < count($sql[$i]); $j++)
-                                        {
-                                            if($j > 0) $str .= ",";
-                                            $str .= $sql[$i][$j];
-                                        }
-                                        query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $str)", [$id_per_insert + $i]);
-                                    }
-                                    //query("UPDATE table_$id SET $str WHERE id = %i", [(int)$param[1] + 1]);
-                                    /* print_r($count_insert_fields);
-                                    print_r($id_per_insert); */
-                                    /* print_r($sql); */
-                                    /* print_r($param); */
+                                            $count_columns = $row[0];
+                                    $count_insert_fields = $count_columns - 1;
+                                    $id_per_insert = (int)$param[1] + 2;
+                                    
+                                    if(!is_object($Mask)) $Mask = new stdClass();
+                                    if(!property_exists($Mask, "".($id_per_insert - 1).""))
+                                        $Mask -> {"".($id_per_insert - 1).""} = new stdClass();
+                                    $Mask -> {"".($id_per_insert - 1).""} -> {"".(int)$param[2].""} = $id_init_table;
+                                    /* echo json_encode($Mask);
+                                    echo $count_insert_fields;
+                                    echo $id_per_insert; */
                                 }
-                                else
-                                {
-                                    $i = 0;
-                                    query("UPDATE table_$id SET id = id + %i WHERE id >= %i ORDER by id DESC", [$count_insert_fields, $id_per_insert]);
-                                    if($result = query("SHOW COLUMNS FROM table_$id", []))
-                                        while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                $i = 0;
+                                query("UPDATE table_$id SET id = id + %i WHERE id >= %i ORDER by id DESC", [$count_insert_fields, $id_per_insert]);
+                                if($result = query("SHOW COLUMNS FROM table_$id", []))
+                                    while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    {
+                                        if($i > 1) 
                                         {
-                                            if($i > 1) 
-                                            {
-                                                $value .= ",";
-                                                $col_name .= ",";
-                                            }
-                                            if($i > 0) 
-                                            {
-                                                if(strripos($row[1], "int") === false) $value .= "''";
-                                                else $value .= "0";
-                                                $col_name .= $row[0];
-                                            }
-                                            $i++;
+                                            $value .= ",";
+                                            $col_name .= ",";
                                         }
-                                    for($i = 0; $i < $count_insert_fields; $i++)
-                                        query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $value)", [$id_per_insert + $i]);
-                                }
+                                        if($i > 0) 
+                                        {
+                                            if(strripos($row[1], "int") === false) $value .= "''";
+                                            else $value .= "0";
+                                            $col_name .= $row[0];
+                                        }
+                                        $i++;
+                                    }
+                                for($i = 0; $i < $count_insert_fields; $i++)
+                                    query("INSERT INTO table_$id (id, $col_name) VALUES(%i, $value)", [$id_per_insert + $i]);
+                                query("UPDATE table_big_mask SET mask = %s WHERE id = %i", [json_encode($Mask), $id]);
                             }
                             break;
                         case 106: // Обновление таблицы
@@ -493,7 +482,7 @@
                         case 107: // Запрос списка шаблонов группы
                             request("SELECT name FROM big_template", []);
                             break;
-                        case 108:
+                        case 108: // Поиск таблиц инициализации по имени поля
                             $id_table = -1;
                             $type_table = -1;
                             if($result = query("SELECT id, name_template FROM table_initialization WHERE name_table = %s", [$param[0]]))
@@ -506,10 +495,10 @@
                                 echo json_encode([$id_table]);//request("SELECT * FROM table_init_$id_table", []);
                             else echo json_encode(["empty"]);
                             break;
-                        case 109: // Автоматическое заполнение таблицы
-                            $name_table = $param[0];
-                            request("SELECT * FROM $name_table", []);
-                            break;
+                        /* case 109: // Автоматическое заполнение таблицы
+                            $id_table = (int)$param[0];
+                            request("SELECT * FROM table_init_$id_table", []);
+                            break; */
                     }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями
                 if($out_rights[2])
