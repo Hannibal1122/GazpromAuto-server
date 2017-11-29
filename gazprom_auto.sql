@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Время создания: Ноя 20 2017 г., 08:03
+-- Время создания: Ноя 29 2017 г., 16:29
 -- Версия сервера: 10.1.28-MariaDB
 -- Версия PHP: 7.1.10
 
@@ -25,34 +25,21 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `bind_template`
+-- Структура таблицы `big_template`
 --
 
-CREATE TABLE `bind_template` (
-  `id` int(11) NOT NULL,
-  `name_table` varchar(64) NOT NULL,
-  `name_template` varchar(64) NOT NULL,
-  `id_parent` int(11) DEFAULT NULL,
-  `id_parent_cell` int(11) NOT NULL,
-  `info` varchar(2048) DEFAULT NULL,
-  `rights` int(11) NOT NULL DEFAULT '0',
-  `_default` tinyint(1) DEFAULT '0',
-  `status` varchar(64) DEFAULT NULL,
-  `person` varchar(256) DEFAULT NULL,
-  `terms` varchar(512) DEFAULT NULL
+CREATE TABLE `big_template` (
+  `name` varchar(64) NOT NULL,
+  `hierarchy` varchar(512) NOT NULL,
+  `rights` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Дамп данных таблицы `bind_template`
+-- Дамп данных таблицы `big_template`
 --
 
-INSERT INTO `bind_template` (`id`, `name_table`, `name_template`, `id_parent`, `id_parent_cell`, `info`, `rights`, `_default`, `status`, `person`, `terms`) VALUES
-(1, 'УСО ПЭБ', 'УСО/ШУ', -1, -1, '', 0, 0, '', 'Не выбран', ''),
-(2, 'АСУЭ.021.УСО', 'Шкаф', -1, -1, '', 0, 0, '', 'Не выбран', ''),
-(3, 'BR (ПЛК RX3i)', 'Устройство', -1, -1, '', 0, 0, '', 'Не выбран', ''),
-(4, 'BR1 (БП 16 RX3i)', 'Плата', -1, -1, '', 0, 0, '', 'Не выбран', ''),
-(5, 'Name1', 'Шкаф', -1, -1, '', 0, 0, '', 'Не выбран', ''),
-(7, 'Моя таблица', 'Устройство', -1, -1, '', 0, 0, '', 'Не выбран', '');
+INSERT INTO `big_template` (`name`, `hierarchy`, `rights`) VALUES
+('Проект', '[\"УСО/ШУ\",\"Шкаф\",\"Устройство\",\"Плата\",\"Модуль\"]', NULL);
 
 -- --------------------------------------------------------
 
@@ -115,13 +102,14 @@ CREATE TABLE `rights` (
 --
 
 INSERT INTO `rights` (`id`, `table_id`, `login`, `rights`) VALUES
-(1, 1, 'admin', 15),
-(2, 2, 'admin', 3),
-(3, 3, 'admin', 3),
-(4, 4, 'admin', 3),
-(5, 5, 'admin', 0),
-(6, 7, 'admin', 0),
-(7, 7, 'admin2', 0);
+(12, 5, 'admin', 15),
+(13, 6, 'admin', 15),
+(14, 7, 'admin', 15),
+(15, 8, 'admin', 15),
+(16, 9, 'admin', 15),
+(17, 10, 'admin', 15),
+(18, 11, 'admin', 15),
+(19, 12, 'admin', 15);
 
 -- --------------------------------------------------------
 
@@ -140,7 +128,7 @@ CREATE TABLE `roles` (
 --
 
 INSERT INTO `roles` (`id`, `name`, `rights`) VALUES
-(1, 'Administrator', 31),
+(1, 'Administrator', 255),
 (2, 'Manager', 25),
 (5, 'Инженер', 18);
 
@@ -164,188 +152,170 @@ CREATE TABLE `signin` (
 --
 
 INSERT INTO `signin` (`id`, `login`, `checkkey`, `countreg`, `captcha`, `date`) VALUES
-('GNo8pNbvRww', 'admin', '4c5c9925bc681f53746178b565958202', 0, '', '2017-11-20 07:47:03');
+('GNo8pNbvRww', 'admin', '679c1114ef5a34d54c53c19720cebc80', 0, '', '2017-11-29 16:24:13');
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `table_1`
+-- Структура таблицы `table_big`
 --
 
-CREATE TABLE `table_1` (
+CREATE TABLE `table_big` (
   `id` int(11) NOT NULL,
-  `f_0` varchar(2048) DEFAULT NULL,
-  `f_1` varchar(2048) DEFAULT NULL
+  `name_table` varchar(64) NOT NULL,
+  `name_template` varchar(64) NOT NULL,
+  `info` varchar(2048) DEFAULT NULL,
+  `rights` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Дамп данных таблицы `table_1`
+-- Дамп данных таблицы `table_big`
 --
 
-INSERT INTO `table_1` (`id`, `f_0`, `f_1`) VALUES
-(1, '1', '2'),
-(2, '3', '4'),
-(3, '1', '2'),
-(4, '3', '4'),
-(5, '', ''),
-(6, '', ''),
-(7, '', ''),
-(8, '', ''),
-(9, '', ''),
-(10, '', ''),
-(11, '', ''),
-(12, '', ''),
-(13, '', ''),
-(14, '', '');
+INSERT INTO `table_big` (`id`, `name_table`, `name_template`, `info`, `rights`) VALUES
+(12, '1', 'Проект', '', 0);
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `table_2`
+-- Структура таблицы `table_initialization`
 --
 
-CREATE TABLE `table_2` (
+CREATE TABLE `table_initialization` (
   `id` int(11) NOT NULL,
-  `f_0` varchar(2048) DEFAULT NULL,
-  `f_1` varchar(2048) DEFAULT NULL,
-  `f_2` int(11) DEFAULT NULL
+  `name_table` varchar(64) NOT NULL,
+  `name_template` varchar(64) NOT NULL,
+  `info` varchar(2048) DEFAULT NULL,
+  `rights` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Дамп данных таблицы `table_2`
+-- Дамп данных таблицы `table_initialization`
 --
 
-INSERT INTO `table_2` (`id`, `f_0`, `f_1`, `f_2`) VALUES
-(1, '', '', 0),
-(2, '', '', 0),
-(3, '', '', 0),
-(4, '', '', 0),
-(5, '', '', 0),
-(6, '', '', 0),
-(7, '', '', 0),
-(8, '', '', 0),
-(9, '', '', 0),
-(10, '', '', 0);
+INSERT INTO `table_initialization` (`id`, `name_table`, `name_template`, `info`, `rights`) VALUES
+(12, 'RX3i', 'Плата', '', 0),
+(13, 'БП 16 RX3i', 'Модуль', '', 0);
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `table_3`
+-- Структура таблицы `table_init_12`
 --
 
-CREATE TABLE `table_3` (
+CREATE TABLE `table_init_12` (
   `id` int(11) NOT NULL,
-  `f_0` varchar(2048) DEFAULT NULL,
-  `f_1` varchar(2048) DEFAULT NULL,
-  `f_2` varchar(2048) DEFAULT NULL,
-  `f_3` varchar(2048) DEFAULT NULL
+  `f_0` varchar(256) DEFAULT NULL,
+  `f_1` varchar(256) DEFAULT NULL,
+  `f_2` varchar(256) DEFAULT NULL,
+  `f_3` varchar(256) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Дамп данных таблицы `table_3`
+-- Дамп данных таблицы `table_init_12`
 --
 
-INSERT INTO `table_3` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
-(1, '', '', '', ''),
-(2, '', '', '', ''),
-(3, '', '', '', ''),
-(4, '', '', '', ''),
-(5, '', '', '', ''),
-(6, '', '', '', ''),
-(7, '', '', '', ''),
-(8, '', '', '', ''),
-(9, '', '', '', ''),
-(10, '', '', '', '');
+INSERT INTO `table_init_12` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
+(1, 'q', '', '', ''),
+(2, 'w', '', '', ''),
+(3, 'e', '', '', ''),
+(4, 'r', '', '', '');
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `table_4`
+-- Структура таблицы `table_init_13`
 --
 
-CREATE TABLE `table_4` (
+CREATE TABLE `table_init_13` (
   `id` int(11) NOT NULL,
-  `f_0` varchar(2048) DEFAULT NULL,
-  `f_1` varchar(2048) DEFAULT NULL,
-  `f_2` varchar(2048) DEFAULT NULL,
-  `f_3` varchar(2048) DEFAULT NULL
+  `f_0` varchar(256) DEFAULT NULL,
+  `f_1` varchar(256) DEFAULT NULL,
+  `f_2` varchar(256) DEFAULT NULL,
+  `f_3` varchar(256) DEFAULT NULL,
+  `f_4` varchar(256) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Дамп данных таблицы `table_4`
+-- Дамп данных таблицы `table_init_13`
 --
 
-INSERT INTO `table_4` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
-(1, '', '', '', ''),
-(2, '', '', '', ''),
-(3, '', '', '', ''),
-(4, '', '', '', ''),
-(5, '', '', '', ''),
-(6, '', '', '', ''),
-(7, '', '', '', ''),
-(8, '', '', '', ''),
-(9, '', '', '', ''),
-(10, '', '', '', '');
+INSERT INTO `table_init_13` (`id`, `f_0`, `f_1`, `f_2`, `f_3`, `f_4`) VALUES
+(1, 'q', '', '', '', ''),
+(2, 'w', '', '', '', ''),
+(3, 'e', '', '', '', ''),
+(4, 'r', '', '', '', ''),
+(5, 't', '', '', '', ''),
+(6, 'y', '', '', '', ''),
+(7, 'u', '', '', '', ''),
+(8, 'i', '', '', '', ''),
+(9, 'o', '', '', '', ''),
+(10, 'p', '', '', '', ''),
+(11, '[', '', '', '', ''),
+(12, ']', '', '', '', ''),
+(13, '\\', '', '', '', ''),
+(14, 'a', '', '', '', ''),
+(15, 's', '', '', '', ''),
+(16, 'd', '', '', '', '');
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `table_5`
+-- Структура таблицы `table_tree_big`
 --
 
-CREATE TABLE `table_5` (
+CREATE TABLE `table_tree_big` (
   `id` int(11) NOT NULL,
-  `f_0` varchar(2048) DEFAULT NULL,
-  `f_1` varchar(2048) DEFAULT NULL,
-  `f_2` int(11) DEFAULT NULL
+  `id_table` int(11) NOT NULL,
+  `template` varchar(64) NOT NULL,
+  `parent` int(11) NOT NULL,
+  `fields` varchar(4096) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Дамп данных таблицы `table_5`
+-- Дамп данных таблицы `table_tree_big`
 --
 
-INSERT INTO `table_5` (`id`, `f_0`, `f_1`, `f_2`) VALUES
-(1, '', '', 0),
-(2, '', '', 0),
-(3, '', '', 9),
-(4, '', '', 2),
-(5, '', '', 8),
-(6, '', '', 7),
-(7, '', '', 6),
-(8, '', '', 3),
-(9, '', '', 5),
-(10, '', '', 4),
-(11, '', '', 0);
-
--- --------------------------------------------------------
-
---
--- Структура таблицы `table_7`
---
-
-CREATE TABLE `table_7` (
-  `id` int(11) NOT NULL,
-  `f_0` varchar(2048) DEFAULT NULL,
-  `f_1` varchar(2048) DEFAULT NULL,
-  `f_2` varchar(2048) DEFAULT NULL,
-  `f_3` varchar(2048) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Дамп данных таблицы `table_7`
---
-
-INSERT INTO `table_7` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
-(1, 'asd', 'asd', 'asd', ''),
-(2, 'asd', 'asqwe', 'asd', 'asd'),
-(3, 'asd', 'sad', 'asdasd', ''),
-(4, 'asd', 'asd', '', ''),
-(5, 'asd', 'asd', '', ''),
-(6, 'asd', 'asd', 'asd', ''),
-(7, 'asd', 'asdqweqwe', 'asd', ''),
-(8, '', 'asd', 'asd', ''),
-(9, '', 'asd', 'asd', ''),
-(10, '', 'asd', 'ads', '');
+INSERT INTO `table_tree_big` (`id`, `id_table`, `template`, `parent`, `fields`) VALUES
+(1, 12, 'УСО/ШУ', 0, '[\"1\",\"2\"]'),
+(2, 12, 'Шкаф', 1, '[\"4\",\"5\",77]'),
+(3, 12, 'Устройство', 2, '[\"e\",\"RX3i\",\"r\",\"t\"]'),
+(4, 12, 'Плата', 3, '[\"\",\"\",\"\",\"\"]'),
+(5, 12, 'Модуль', 4, '[\"\",\"\",\"\",\"\",\"\"]'),
+(6, 12, 'Плата', 3, '[\"\",\"\",\"\",\"\"]'),
+(7, 12, 'Плата', 3, '[\"\",\"\",\"\",\"\"]'),
+(8, 12, 'Модуль', 4, '[\"\",\"\",\"\",\"\",\"\"]'),
+(9, 12, 'Шкаф', 1, '[\"\",\"\",\"\"]'),
+(10, 12, 'УСО/ШУ', 0, '[\"\",\"\"]'),
+(11, 12, 'Шкаф', 10, '[\"\",\"\",\"\"]'),
+(12, 12, 'Устройство', 11, '[\"\",\"\",\"\",\"\"]'),
+(13, 12, 'Плата', 12, '[\"\",\"\",\"\",\"\"]'),
+(14, 12, 'Модуль', 13, '[\"\",\"\",\"\",\"\",\"\"]'),
+(15, 12, 'Устройство', 9, '[\"\",\"\",\"\",\"\"]'),
+(16, 12, 'Плата', 15, '[\"\",\"\",\"\",\"\"]'),
+(17, 12, 'Устройство', 9, '[\"\",\"\",\"\",\"\"]'),
+(18, 12, 'Устройство', 9, '[\"\",\"\",\"\",\"\"]'),
+(19, 12, 'Устройство', 9, '[\"\",\"\",\"\",\"\"]'),
+(20, 12, 'Устройство', 9, '[\"\",\"\",\"\",\"\"]'),
+(21, 12, 'Устройство', 9, '[\"\",\"\",\"\",\"\"]'),
+(22, 12, 'Модуль', 6, '[\"\",\"\",\"\",\"\",\"\"]'),
+(23, 12, 'Модуль', 7, '[\"\",\"\",\"\",\"\",\"\"]'),
+(24, 12, 'Модуль', 16, '[\"\",\"\",\"\",\"\",\"\"]'),
+(25, 12, 'Плата', 17, '[\"\",\"\",\"\",\"\"]'),
+(26, 12, 'Плата', 18, '[\"\",\"\",\"\",\"\"]'),
+(27, 12, 'Плата', 19, '[\"\",\"\",\"\",\"\"]'),
+(28, 12, 'Плата', 20, '[\"\",\"\",\"\",\"\"]'),
+(29, 12, 'Плата', 21, '[\"\",\"\",\"\",\"\"]'),
+(30, 12, 'Плата', 21, '[\"\",\"\",\"\",\"\"]'),
+(31, 12, 'Модуль', 25, '[\"\",\"\",\"\",\"\",\"\"]'),
+(32, 12, 'Модуль', 26, '[\"\",\"\",\"\",\"\",\"\"]'),
+(33, 12, 'Модуль', 27, '[\"\",\"\",\"\",\"\",\"\"]'),
+(34, 12, 'Модуль', 28, '[\"\",\"\",\"\",\"\",\"\"]'),
+(35, 12, 'Модуль', 29, '[\"\",\"\",\"\",\"\",\"\"]'),
+(36, 12, 'Модуль', 30, '[\"\",\"\",\"\",\"\",\"\"]'),
+(37, 12, 'Устройство', 9, '[\"\",\"\",\"\",\"\"]'),
+(38, 12, 'Плата', 37, '[\"\",\"\",\"\",\"\"]'),
+(39, 12, 'Модуль', 38, '[\"\",\"\",\"\",\"\",\"\"]');
 
 -- --------------------------------------------------------
 
@@ -366,9 +336,10 @@ CREATE TABLE `template` (
 --
 
 INSERT INTO `template` (`name`, `status`, `status_color`, `fields`, `rights`) VALUES
-('Плата', '[]', '[]', '[{\"name\":\"Имя\",\"type\":\"VARCHAR\"},{\"name\":\"Наименование (КД)\",\"type\":\"VARCHAR\"},{\"name\":\"Обозначение (КД)\",\"type\":\"VARCHAR\"},{\"name\":\"Примечание (КД)\",\"type\":\"VARCHAR\"}]', NULL),
+('Модуль', '[]', '[]', '[{\"name\":\"Имя\",\"type\":\"VARCHAR\"},{\"name\":\"Наименование\",\"type\":\"VARCHAR\"},{\"name\":\"Обозначение\",\"type\":\"VARCHAR\"},{\"name\":\"Примечание\",\"type\":\"VARCHAR\"},{\"name\":\"Тип\",\"type\":\"VARCHAR\"}]', NULL),
+('Плата', '[]', '[]', '[{\"name\":\"Имя\",\"type\":\"VARCHAR\"},{\"name\":\"Наименование\",\"type\":\"Имя платы\"},{\"name\":\"Обозначение (КД)\",\"type\":\"VARCHAR\"},{\"name\":\"Примечание (КД)\",\"type\":\"VARCHAR\"}]', NULL),
 ('УСО/ШУ', '[]', '[]', '[{\"name\":\"Имя\",\"type\":\"VARCHAR\"},{\"name\":\"Наименование(КД)\",\"type\":\"VARCHAR\"}]', NULL),
-('Устройство', '[]', '[]', '[{\"name\":\"Имя\",\"type\":\"VARCHAR\"},{\"name\":\"Наименование (КД)\",\"type\":\"VARCHAR\"},{\"name\":\"Обозначение (КД)\",\"type\":\"VARCHAR\"},{\"name\":\"Примечание (КД)\",\"type\":\"VARCHAR\"}]', NULL),
+('Устройство', '[]', '[]', '[{\"name\":\"Имя\",\"type\":\"VARCHAR\"},{\"name\":\"Наименование (КД)\",\"type\":\"Новый тип\"},{\"name\":\"Обозначение (КД)\",\"type\":\"VARCHAR\"},{\"name\":\"Примечание (КД)\",\"type\":\"VARCHAR\"}]', NULL),
 ('Шкаф', '[]', '[]', '[{\"name\":\"Имя\",\"type\":\"VARCHAR\"},{\"name\":\"Наименование (КД)\",\"type\":\"VARCHAR\"},{\"name\":\"Заводской номер\",\"type\":\"INT\"}]', NULL);
 
 -- --------------------------------------------------------
@@ -388,17 +359,18 @@ CREATE TABLE `type` (
 --
 
 INSERT INTO `type` (`name`, `_default`, `rights`) VALUES
-('Новый тип', '[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\"]', NULL);
+('Имя платы', '[\"БП 16 RX3i\",\" БП 12 RX3i\"]', NULL),
+('Новый тип', '[\"RX3i\",\"RX4i\",\"RX7i\"]', NULL);
 
 --
 -- Индексы сохранённых таблиц
 --
 
 --
--- Индексы таблицы `bind_template`
+-- Индексы таблицы `big_template`
 --
-ALTER TABLE `bind_template`
-  ADD PRIMARY KEY (`id`);
+ALTER TABLE `big_template`
+  ADD PRIMARY KEY (`name`);
 
 --
 -- Индексы таблицы `password`
@@ -431,39 +403,33 @@ ALTER TABLE `signin`
   ADD PRIMARY KEY (`id`);
 
 --
--- Индексы таблицы `table_1`
+-- Индексы таблицы `table_big`
 --
-ALTER TABLE `table_1`
+ALTER TABLE `table_big`
   ADD PRIMARY KEY (`id`);
 
 --
--- Индексы таблицы `table_2`
+-- Индексы таблицы `table_initialization`
 --
-ALTER TABLE `table_2`
+ALTER TABLE `table_initialization`
   ADD PRIMARY KEY (`id`);
 
 --
--- Индексы таблицы `table_3`
+-- Индексы таблицы `table_init_12`
 --
-ALTER TABLE `table_3`
+ALTER TABLE `table_init_12`
   ADD PRIMARY KEY (`id`);
 
 --
--- Индексы таблицы `table_4`
+-- Индексы таблицы `table_init_13`
 --
-ALTER TABLE `table_4`
+ALTER TABLE `table_init_13`
   ADD PRIMARY KEY (`id`);
 
 --
--- Индексы таблицы `table_5`
+-- Индексы таблицы `table_tree_big`
 --
-ALTER TABLE `table_5`
-  ADD PRIMARY KEY (`id`);
-
---
--- Индексы таблицы `table_7`
---
-ALTER TABLE `table_7`
+ALTER TABLE `table_tree_big`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -483,16 +449,10 @@ ALTER TABLE `type`
 --
 
 --
--- AUTO_INCREMENT для таблицы `bind_template`
---
-ALTER TABLE `bind_template`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
 -- AUTO_INCREMENT для таблицы `rights`
 --
 ALTER TABLE `rights`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT для таблицы `roles`
@@ -501,40 +461,34 @@ ALTER TABLE `roles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT для таблицы `table_1`
+-- AUTO_INCREMENT для таблицы `table_big`
 --
-ALTER TABLE `table_1`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+ALTER TABLE `table_big`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT для таблицы `table_2`
+-- AUTO_INCREMENT для таблицы `table_initialization`
 --
-ALTER TABLE `table_2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+ALTER TABLE `table_initialization`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
--- AUTO_INCREMENT для таблицы `table_3`
+-- AUTO_INCREMENT для таблицы `table_init_12`
 --
-ALTER TABLE `table_3`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+ALTER TABLE `table_init_12`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT для таблицы `table_4`
+-- AUTO_INCREMENT для таблицы `table_init_13`
 --
-ALTER TABLE `table_4`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+ALTER TABLE `table_init_13`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
--- AUTO_INCREMENT для таблицы `table_5`
+-- AUTO_INCREMENT для таблицы `table_tree_big`
 --
-ALTER TABLE `table_5`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT для таблицы `table_7`
---
-ALTER TABLE `table_7`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+ALTER TABLE `table_tree_big`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
