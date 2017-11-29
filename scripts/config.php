@@ -1,7 +1,7 @@
 <?php
 	$hostname = "localhost"; 
 	$username = "root";     
-	$password = "25mad92";
+	$password = "";
 	$dbName = "gazprom_auto";
 	//$username = "root";     
 	//$password = "25mad92";
