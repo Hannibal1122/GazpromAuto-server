@@ -288,9 +288,8 @@
                             break;*/
                         case 103: // Удаление таблицы
                             $id_table = (int)$param[0];
-                            query("DROP TABLE table_$id_table", []);
                             query("DELETE FROM table_big WHERE id = %i", [$id_table]);
-                            query("DELETE FROM table_big_mask WHERE id = %i", [$id_table]);
+                            query("DELETE FROM table_tree_big WHERE id_table = %i", [$id_table]);
                             break;
                         case 104: // Загрузка таблицы
                             $id = (int)($param[0]);
