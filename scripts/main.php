@@ -374,11 +374,30 @@
                             else echo json_encode(["empty"]);
                             break;
                         case 109: // Удаление записей из таблицы
+                            $id = (int)($param[0]);
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; };
+                            $out = (int)$param[1];
+                            getAllChildrenForRemove((int)$param[1]);
+                            query("DELETE FROM table_tree_big WHERE id IN ($out)", []);
                             break;
-                        /* case 110: // Автоматическое заполнение таблицы
-                            $id_table = (int)$param[0];
-                            request("SELECT * FROM table_init_$id_table", []);
-                            break; */
+                        case 110: // Автоматическое заполнение таблицы
+                            $id = (int)($param[0]);
+                            $id_init_table = (int)$param[3];
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; };
+                            
+                            $out = "-1";
+                            getAllChildrenForRemove((int)$param[2]);
+                            query("DELETE FROM table_tree_big WHERE id IN ($out)", []);
+
+                            if($result = query("SELECT * FROM table_init_$id_init_table", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    array_shift($row);
+                                    query("INSERT INTO table_tree_big (id_table, template, parent, fields) VALUES(%i, %s, %i, %s)", [$id, $param[1], $param[2], json_encode($row)]);
+                                }
+                            /* echo "template = ".$param[1]."\n";
+                            echo "parent = ".$param[2]."\n"; */
+                            break;
                     }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями
                 if($out_rights[2])
@@ -483,7 +502,7 @@
         $Rights = recodeRights($Rights, 4);
         return $Rights;
     }
-    function getAllChildren($data, $parent, $dataParent) // Это происходит на сервере!!!
+    function getAllChildren($data, $parent, $dataParent)
     {
         $c = count($data);
         for($i = 0; $i < $c; $i++)
@@ -491,6 +510,16 @@
             {
                 $dataParent->{'children'}->{$data[$i][0]} = (object) array("template" => $data[$i][2], "data" => json_decode($data[$i][4]), "children" => new stdClass());
                 getAllChildren($data, $data[$i][0], $dataParent->{'children'}->{$data[$i][0]});
+            }
+    }
+    function getAllChildrenForRemove($parent)
+    {
+        global $out;
+        if($result = query("SELECT id FROM table_tree_big WHERE parent = %i", [$parent]))
+            while($row = $result->fetch_array(MYSQLI_NUM)) 
+            {
+                $out .= ",".(int)$row[0];
+                getAllChildrenForRemove((int)$row[0]);
             }
     }
 ?>				
