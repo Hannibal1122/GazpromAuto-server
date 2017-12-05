@@ -123,6 +123,9 @@
                     case 42: // Запрос списка таблиц
                         request("SELECT name_table, id FROM table_big", []);//
                         break;
+                    case 43: // Запрос списка таблиц
+                        request("SELECT name_table, id FROM table_initialization", []);//
+                    break;
                 }
             if($nQuery >= 50 && $nQuery < 100) // Работа с шаблонами и типами
                 if($out_rights[0])
@@ -154,7 +157,7 @@
                             request("SELECT name, status FROM template", []);
                             break;  
                         case 59: // Запрос списка таблиц
-                            request("SELECT id, name_table, name_template, info, rights FROM table_initialization", []);
+                            request("SELECT id, name_table, name_template, info FROM table_initialization WHERE id IN (SELECT id_table FROM rights_template WHERE login = %s AND rights & 1)", [$paramL]);
                             break; 
                         case 60: // Добавление таблицы
                             if($result = query("SELECT fields FROM template WHERE name = %s", [$param[1]]))
@@ -183,17 +186,21 @@
                                 $i++;
                             }
                             $str .= ", PRIMARY KEY (id)";
-                            query("INSERT INTO table_initialization (name_table, name_template, info, rights) VALUES(%s, %s, %s, %i)", $param);
+                            query("INSERT INTO table_initialization (name_table, name_template, info) VALUES(%s, %s, %s)", $param);
                             $id =  $mysqli->insert_id;
                             query("CREATE TABLE table_init_$id ($str)", []);
+                            query("INSERT INTO rights_template (id_table, login, rights) VALUES(%i, %s, %i)", [$id, $paramL, 15]);
                             break;   
                         case 61: // Изменение таблицы
-                            request("UPDATE table_initialization SET info = %s, rights = %i WHERE id = %i", $param);
+                            $id = (int)$param[1];
+                            if(!checkRightsForTableTemplate(1, $paramL, $id)) { break; }
+                            request("UPDATE table_initialization SET info = %s WHERE id = %i", $param);
                             break;
                         case 62: // Удаление таблицы
-                            $id_table = (int)$param[0];
-                            query("DROP TABLE table_init_$id_table", []);
-                            query("DELETE FROM table_initialization WHERE id = %i", [$id_table]); 
+                            $id = (int)$param[0];
+                            if(!checkRightsForTableTemplate(2, $paramL, $id)) { break; }
+                            query("DROP TABLE table_init_$id", []);
+                            query("DELETE FROM table_initialization WHERE id = %i", [$id]); 
                             break;
                         case 63: // Загрузка таблицы
                             $id = (int)($param[0]);
@@ -201,6 +208,9 @@
                             $Template = [];
                             $Table = [];
                             $Type = [];
+                            $Rights = getRightsForTable("rights_template", $paramL, $id);
+                            if($Rights[0] == 0) { echo json_encode([-1]); break; }
+
                             if($result = query("SELECT * FROM table_init_$id", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Table[] = $row;
                             if($result = query("SELECT * FROM table_initialization WHERE id = %i", [$id]))
@@ -222,10 +232,11 @@
                             if($col_name != "")
                             if($result = query("SELECT * FROM type WHERE name IN ($col_name)", $value))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) $Type[$row[0]] = $row;
-                            echo json_encode(["head" => $Head, "data" => $Table, "template" => $Template, "type" => $Type, "rights" => [15]]);
+                            echo json_encode(["head" => $Head, "data" => $Table, "template" => $Template, "type" => $Type, "rights" => $Rights]);
                             break;
                         case 64: // Добавление строк в таблицу
                             $id = (int)($param[0]);
+                            if(!checkRightsForTableTemplate(1, $paramL, $id)) { break; }
                             $value = "";
                             $col_name = "";
                             $i = 0;
@@ -251,7 +262,7 @@
                             $id = (int)($param[0]);
                             $col_name = "";
                             $i = 0;
-                            //if(!checkRightsForTable(1, $paramL, $id)) { break; }
+                            if(!checkRightsForTableTemplate(1, $paramL, $id)) { break; }
                             if($result = query("SHOW COLUMNS FROM table_init_$id", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) 
                                 {
@@ -270,26 +281,35 @@
                         case 68: // Изменение шаблона группы
                             request("UPDATE big_template SET hierarchy = %s WHERE name = %s", $param);
                             break;
+                        case 69: // Удаление записей из таблицы
+                            $id = (int)($param[0]);
+                            if(!checkRightsForTableTemplate(2, $paramL, $id)) { break; };
+                            query("DELETE FROM table_init_$id WHERE id = %i", [$param[1]]);
+                            break;
                     }
             if($nQuery >= 100 && $nQuery < 150) // Работа с Данными
                 if($out_rights[1])
                     switch($nQuery)
                     {
                         case 100: // Запрос списка таблиц
-                            request("SELECT id, name_table, name_template, info, rights FROM table_big WHERE id IN (SELECT table_id FROM rights WHERE login = %s AND rights & 1)", [$paramL]);
+                            request("SELECT id, name_table, name_template, info FROM table_big WHERE id IN (SELECT id_table FROM rights WHERE login = %s AND rights & 1)", [$paramL]);
                             break;   
                         case 101: // Добавление таблицы
-                            query("INSERT INTO table_big (name_table, name_template, info, rights) VALUES(%s, %s, %s, %i)", $param);
+                            query("INSERT INTO table_big (name_table, name_template, info) VALUES(%s, %s, %s)", $param);
                             $id =  $mysqli->insert_id;
-                            query("INSERT INTO rights (table_id, login, rights) VALUES(%i, %s, %i)", [$id, $paramL, 15]);
+                            query("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", [$id, $paramL, 15]);
                             break;   
                         /* case 102: // Изменение таблицы
-                            request("UPDATE bind_template SET id_parent = %i, id_parent_cell = %i, info = %s, rights = %i, _default = %i, status = %s, person = %s, terms = %s WHERE id = %i", $param);
-                            break;*/
+                            $id = (int)($param[0]);
+                            if(!checkRightsForTable(1, $paramL, $id)) { break; };
+                            request("UPDATE table_big SET info = %s WHERE id = %i", $param);
+                            break; */
                         case 103: // Удаление таблицы
-                            $id_table = (int)$param[0];
-                            query("DELETE FROM table_big WHERE id = %i", [$id_table]);
-                            query("DELETE FROM table_tree_big WHERE id_table = %i", [$id_table]);
+                            $id = (int)($param[0]);
+                            if(!checkRightsForTable(2, $paramL, $id)) { break; };
+                            query("DELETE FROM table_big WHERE id = %i", [$id]);
+                            query("DELETE FROM table_tree_big WHERE id_table = %i", [$id]);
+                            query("DELETE FROM rights WHERE id_table = %i", [$id]);
                             break;
                         case 104: // Загрузка таблицы
                             $id = (int)($param[0]);
@@ -297,7 +317,7 @@
                             $Table = [];
                             $OutTable = new stdClass();
                             $Type = [];
-                            $Rights = getRightsForTable($paramL, $id);
+                            $Rights = getRightsForTable("rights", $paramL, $id);
                             if($Rights[0] == 0) { echo json_encode([-1]); break; }
                             /************************************************ */
                             if($result = query("SELECT * FROM table_tree_big WHERE id_table = %i ORDER by parent", [$id]))
@@ -354,7 +374,7 @@
                         case 106: // Обновление таблицы
                             $id = (int)($param[0]);
                             if(!checkRightsForTable(1, $paramL, $id)) { break; };
-                            query("UPDATE table_tree_big SET fields = %s WHERE id = %i", [$param[1], $param[2]]);
+                            query("UPDATE table_tree_big SET fields = %s WHERE id = %i AND id_table = %i", [$param[1], $param[2], $id]);
                             break;
                         case 107: // Запрос списка шаблонов группы
                             request("SELECT name FROM big_template", []);
@@ -374,10 +394,10 @@
                             break;
                         case 109: // Удаление записей из таблицы
                             $id = (int)($param[0]);
-                            if(!checkRightsForTable(1, $paramL, $id)) { break; };
+                            if(!checkRightsForTable(2, $paramL, $id)) { break; };
                             $out = (int)$param[1];
                             getAllChildrenForRemove((int)$param[1]);
-                            query("DELETE FROM table_tree_big WHERE id IN ($out)", []);
+                            query("DELETE FROM table_tree_big WHERE id IN ($out) AND id_table = %i", [$id]);
                             break;
                         case 110: // Автоматическое заполнение таблицы
                             $id = (int)($param[0]);
@@ -386,7 +406,7 @@
                             
                             $out = "-1";
                             getAllChildrenForRemove((int)$param[2]);
-                            query("DELETE FROM table_tree_big WHERE id IN ($out)", []);
+                            query("DELETE FROM table_tree_big WHERE id IN ($out) AND id_table = %i", [$id]);
 
                             if($result = query("SELECT * FROM table_init_$id_init_table", []))
                                 while($row = $result->fetch_array(MYSQLI_NUM)) 
@@ -436,15 +456,24 @@
                     switch($nQuery)
                     {
                         case 200: // Запрос списка прав
-                            request("SELECT id, table_id, login, rights FROM rights", []);
+                            request("SELECT id, id_table, login, rights FROM rights", []);
                             break;   
                         case 201: // Добавление права
-                            request("INSERT INTO rights (table_id, login, rights) VALUES(%i, %s, %i)", $param);
+                            request("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", $param);
                             break;   
                         case 202: // Изменение права
-                            request("UPDATE rights SET table_id = %i, login = %s, rights = %i WHERE id = %i", $param);
+                            request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", $param);
                             break;
                         case 203: // Удаление права
+                            break;
+                        case 204: // Запрос списка прав на таблицы инициализации
+                            request("SELECT id, id_table, login, rights FROM rights_template", []);
+                            break;   
+                        case 205: // Добавление права на таблицы инициализации
+                            request("INSERT INTO rights_template (id_table, login, rights) VALUES(%i, %s, %i)", $param);
+                            break;   
+                        case 206: // Изменение права на таблицы инициализации
+                            request("UPDATE rights_template SET id_table = %i, login = %s, rights = %i WHERE id = %i", $param);
                             break;
                     }
             if($nQuery >= 250 && $nQuery < 300) // Работа с Событиями
@@ -486,16 +515,22 @@
         }
         return $out;
     }
-    function checkRightsForTable($i, $login, $id)
+    function checkRightsForTableTemplate($i, $login, $id)
     {
-        $Rights = getRightsForTable($login, $id);
+        $Rights = getRightsForTable("rights_template", $login, $id);
         if($Rights[$i] == 0) return false;
         return true;
     }
-    function getRightsForTable($login, $id)
+    function checkRightsForTable($i, $login, $id)
+    {
+        $Rights = getRightsForTable("rights", $login, $id);
+        if($Rights[$i] == 0) return false;
+        return true;
+    }
+    function getRightsForTable($table, $login, $id)
     {
         $Rights = [];
-        if($result = query("SELECT rights FROM rights WHERE login = %s AND table_id = %i", [$login, $id]))
+        if($result = query("SELECT rights FROM $table WHERE login = %s AND id_table = %i", [$login, $id]))
             while($row = $result->fetch_array(MYSQLI_NUM)) 
                 $Rights = (int)$row[0];
         $Rights = recodeRights($Rights, 4);
