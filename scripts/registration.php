@@ -6,7 +6,7 @@
 	$mail = $param[3];
 	$role = $param[4];
 	
-    if (!preCheckL($login) && !preCheckP($mail) && !preCheckPass($pass)) // Далее проверяется правильность написания логина пароля и почты
+    if (!preCheckL($login)/*  && !preCheckP($mail) */ && !preCheckPass($pass)) // Далее проверяется правильность написания логина пароля и почты
     {
         $array = [];
         $j = 0;
@@ -30,7 +30,7 @@
                         $array[$j] = $row[$i];
                         $j++;
                     }
-            $bool2 = !checkP2($array, $mail);
+            $bool2 = true/* !checkP2($array, $mail) */;
             $bool1 = true;
             if(!$bool2) echo json_encode(["yes", "no", "yes"]);
         } 

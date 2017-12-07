@@ -110,7 +110,7 @@
         {
             if($result = query("SELECT rights FROM roles WHERE id IN (SELECT role FROM registration WHERE login = %s)", [$paramL]))
                 while ($row = $result->fetch_array(MYSQLI_NUM)) $rights = (int)$row[0];
-            $out_rights = recodeRights($rights, 5);
+            $out_rights = recodeRights($rights, 8);
             if($nQuery >= 40 && $nQuery < 50)
                 switch($nQuery)
                 {
@@ -144,7 +144,41 @@
                             request("INSERT INTO type (name, _default) VALUES(%s, %s)", $param);
                             break;
                         case 54: // Изменение шаблона
+                            $fields = [];
+                            $newFields = json_decode($param[2]);
+                            $changesAdd = [];
+                            print_r($param);
+                            if($result = query("SELECT fields FROM template WHERE name = %s", [$param[3]]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $fields = json_decode($row[0]);// = $row;//
+                            $c1 = count($newFields);
+                            $c2 = count($fields);
+                            for($i = 0; $i < $c1; $i++)
+                            {
+                                for($j = 0; $j < $c2; $j++)
+                                    if($newFields[$i]->name == $fields[$j]->name) break;
+                                if($j != $c2) $newFields[$i]->old_position = $j;
+                            }
                             request("UPDATE template SET status = %s, status_color = %s, fields = %s WHERE name = %s", $param);
+                            if($result = query("SELECT id, fields FROM table_tree_big WHERE template = %s", [$param[3]]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    $old_fields = json_decode($row[1]);
+                                    $new_fields = [];
+                                    for($i = 0; $i < $c1; $i++)
+                                        if(property_exists($newFields[$i],"old_position")) $new_fields[$i] = $old_fields[$newFields[$i]->old_position];
+                                        else // В зависимости от типа
+                                            switch($newFields[$i]->type) 
+                                            {
+                                                case "INT":
+                                                case "DOUBLE":
+                                                    $new_fields[$i] = 0;
+                                                    break;
+                                                default:
+                                                    $new_fields[$i] = "";
+                                                    break;
+                                            }
+                                    query("UPDATE table_tree_big SET fields = %s WHERE id = %i", [json_encode($new_fields), $row[0]]);
+                                }
                             break;
                         case 55: // Изменение типа
                             request("UPDATE type SET _default = %s WHERE name = %s", [$param[1], $param[0]]);
@@ -423,7 +457,8 @@
                     switch($nQuery)
                     {
                         case 150: // Запрос списка пользователей
-                            request("SELECT login, role, name, mail FROM registration", []);
+                            //request("SELECT login, role, name, mail FROM registration", []);
+                            getNameForLogin();
                             break;
                         case 151: // Запрос списка ролей
                             request("SELECT id, name, rights FROM roles", []);
@@ -482,10 +517,62 @@
                     {
 
                     }
+            if($nQuery >= 300 && $nQuery < 350) // Работа с Событиями
+                if($out_rights[6])
+                    switch($nQuery)
+                    {
+                        case 300: // Запрос списка задач по логину все три типа
+                            break;
+                        case 301: // Добавить новую задачу
+                            break;
+                        case 302: // Изменить существующую задачу (проверка на роль)
+                            break;
+                        case 303: // Изменить статус задачи (проверка на роль)
+                            break;
+                        case 304: // Запрос количества задач по логину
+                            break;
+                        case 305: // Загрузка файлов
+                            break;
+                        case 306: // Список всех логинов с фамилией
+                            getNameForLogin();
+                            break;
+                    }
         }
     }
     $mysqli->close();
     
+    function getNameForLogin() // Получает список всех логинов с именами, если имеется
+    {
+        $listLogin = []; // Выходной список логинов с ролями и именами
+        $nameFields = []; // Массив с положением полей в шаблоне Имя пользователя
+        $in = []; // временный массив
+        
+        if($result = query("SELECT login, role FROM registration", []))
+            while($row = $result->fetch_array(MYSQLI_NUM)) 
+                $listLogin[$row[0]] = (object) array("role" => $row[1], "name" => "");
+        if($result = query("SELECT fields FROM template WHERE name = 'Имя пользователя'", []))
+            while($row = $result->fetch_array(MYSQLI_NUM))
+            {
+                $in = json_decode($row[0]);
+                $c = count($in);
+                for($i = 0; $i < $c; $i++)
+                    $nameFields[$in[$i]->name] = $i;
+            }   
+        if($result = query("SELECT fields FROM table_tree_big WHERE template = 'Имя пользователя'", []))
+            while($row = $result->fetch_array(MYSQLI_NUM))
+            {
+                $in = json_decode($row[0]);
+                if(array_key_exists($in[$nameFields["Логин"]], $listLogin))
+                {
+                    $name = $in[$nameFields["Имя"]];
+                    $name2 = $in[$nameFields["Отчество"]];
+                    $listLogin[$in[$nameFields["Логин"]]]->name = $in[$nameFields["Фамилия"]]." ".mb_substr($name, 0, 1, "UTF-8").". ".mb_substr($name2, 0, 1, "UTF-8").".";
+                    if(array_key_exists("Почта", $nameFields)) 
+                        $listLogin[$in[$nameFields["Логин"]]]->mail = $in[$nameFields["Почта"]];
+                } 
+            }
+        echo json_encode($listLogin);
+    }
     function request($_query, $param)
     {
         global $mysqli;
@@ -515,13 +602,13 @@
         }
         return $out;
     }
-    function checkRightsForTableTemplate($i, $login, $id)
+    function checkRightsForTableTemplate($i, $login, $id) // Проверка прав на таблицы с шаблонами
     {
         $Rights = getRightsForTable("rights_template", $login, $id);
         if($Rights[$i] == 0) return false;
         return true;
     }
-    function checkRightsForTable($i, $login, $id)
+    function checkRightsForTable($i, $login, $id) // Проверка прав на таблицы с данными
     {
         $Rights = getRightsForTable("rights", $login, $id);
         if($Rights[$i] == 0) return false;
@@ -536,7 +623,7 @@
         $Rights = recodeRights($Rights, 4);
         return $Rights;
     }
-    function getAllChildren($data, $parent, $dataParent)
+    function getAllChildren($data, $parent, $dataParent) // Получить дерево всех данных
     {
         $c = count($data);
         for($i = 0; $i < $c; $i++)
@@ -546,7 +633,7 @@
                 getAllChildren($data, $data[$i][0], $dataParent->{'children'}->{$data[$i][0]});
             }
     }
-    function getAllChildrenForRemove($parent)
+    function getAllChildrenForRemove($parent) // Получить список id для удаления ветки
     {
         global $out;
         if($result = query("SELECT id FROM table_tree_big WHERE parent = %i", [$parent]))
