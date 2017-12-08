@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Время создания: Дек 07 2017 г., 15:45
+-- Время создания: Дек 08 2017 г., 15:38
 -- Версия сервера: 10.1.28-MariaDB
 -- Версия PHP: 7.1.10
 
@@ -61,8 +61,8 @@ CREATE TABLE `password` (
 INSERT INTO `password` (`login`, `hash`) VALUES
 ('admin', '$2a$10$2124cb399981916dc1c74u7CKmeJMT8rRuhh2ODOqfNWXRkBirVSa'),
 ('ya.pechenko92@gmail.com', '$2a$10$4d86aed8e94f7c27730a1OYf1zo1OjJDhPfMmlXT8Cdm8/B3iGLeu'),
-('admin2', '$2a$10$40bde076522466bae6f39uAG.AbJOzdgc.lIanuOCTKTtvyv50Yuu'),
-('admin3', '$2a$10$078a436b26067d44c29abuy5uUJjb1WBHikSS3QH6g9TdDpTgM7rG');
+('admin2', '$2a$10$54b2d442ee26f36bc6e1fOsbSTM75phKDtG1NPyXbr2yM7L0gM4b.'),
+('admin3', '$2a$10$730b7eaa8e2d89cc6596buqFndMmiAaWT3P0nas7RQ6bzPT0r3rf6');
 
 -- --------------------------------------------------------
 
@@ -85,7 +85,7 @@ CREATE TABLE `registration` (
 INSERT INTO `registration` (`login`, `mail`, `role`, `dater`, `name`) VALUES
 ('admin', 'mwork92@gmail.com', 1, '2016-05-27 11:15:07', 'admin'),
 ('ya.pechenko92@gmail.com', 'ya.pechenko92@gmail.com', 2, '2016-09-23 17:09:59', '111'),
-('admin2', 'test1@gmail.com', 5, '2017-11-09 09:54:47', 'test'),
+('admin2', '', 5, '2017-11-09 09:54:47', 'Рученькин А. А.'),
 ('admin3', '', 1, '2017-12-07 14:04:57', '');
 
 -- --------------------------------------------------------
@@ -149,7 +149,7 @@ CREATE TABLE `roles` (
 INSERT INTO `roles` (`id`, `name`, `rights`) VALUES
 (1, 'Administrator', 255),
 (2, 'Manager', 25),
-(5, 'Инженер', 18);
+(5, 'Инженер', 82);
 
 -- --------------------------------------------------------
 
@@ -171,7 +171,7 @@ CREATE TABLE `signin` (
 --
 
 INSERT INTO `signin` (`id`, `login`, `checkkey`, `countreg`, `captcha`, `date`) VALUES
-('GNo8pNbvRww', 'admin', '5bf4f74c5ae73d7e6394a71b9d19d65c', 0, '', '2017-12-07 15:44:14'),
+('GNo8pNbvRww', 'admin', '2e41b35f728f2e746e01bbe143905968', 0, '', '2017-12-08 15:36:19'),
 ('G2382WMJO44', 'admin', 'b3df1ea4c44c0edc63d40e298fe1b940', 0, '', '2017-12-05 13:22:09');
 
 -- --------------------------------------------------------
@@ -194,7 +194,7 @@ CREATE TABLE `table_big` (
 
 INSERT INTO `table_big` (`id`, `name_table`, `name_template`, `info`, `rights`) VALUES
 (17, 'Пользователи', 'Пользователи', '', 0),
-(19, '	 Таблица подключений для САПР', 'Проект', '', 0);
+(19, 'Таблица подключений для САПР', 'Проект', '', 0);
 
 -- --------------------------------------------------------
 
@@ -237,14 +237,14 @@ CREATE TABLE `table_init_12` (
 --
 
 INSERT INTO `table_init_12` (`id`, `f_0`, `f_1`, `f_2`, `f_3`) VALUES
-(12, 'q', '', '', ''),
-(13, 'w', '', '', ''),
-(14, 'e', '', '', ''),
-(15, 'r', '', '', ''),
-(16, 't', '', '', ''),
-(17, 'y', '', '', ''),
-(18, 'u', '', '', ''),
-(19, 'i', '', '', '');
+(12, 'q', 'БП 16 RX3i', '', ''),
+(13, 'w', 'БП 16 RX3i', '', ''),
+(14, 'e', 'БП 16 RX3i', '', ''),
+(15, 'r', 'БП 16 RX3i', '', ''),
+(16, 't', 'БП 16 RX3i', '', ''),
+(17, 'y', 'БП 16 RX3i', '', ''),
+(18, 'u', 'БП 16 RX3i', '', ''),
+(19, 'i', 'БП 16 RX3i', '', '');
 
 -- --------------------------------------------------------
 
@@ -302,13 +302,13 @@ CREATE TABLE `table_tree_big` (
 --
 
 INSERT INTO `table_tree_big` (`id`, `id_table`, `template`, `parent`, `fields`) VALUES
-(1271, 17, 'Имя пользователя', 0, '[\"Рученькин\",\"Михаил\",\"Андреевич\",\"admin\",\"mwork92@gmail.com\",0]'),
-(1272, 17, 'Имя пользователя', 0, '[\"Руенькина\",\"Карина\",\"Александровна\",\"ya.pechenko92@gmail.com\",\"\",0]'),
-(1273, 17, 'Имя пользователя', 0, '[\"Рученькин\",\"Андрей\",\"Александрович\",\"admin2\",\"\",0]'),
+(1271, 17, 'Имя пользователя', 0, '[\"Рученькин\",\"Михаил\",\"Андреевич\",\"\",\"mwork92@gmail.com\",0]'),
+(1272, 17, 'Имя пользователя', 0, '[\"Руенькина\",\"Карина\",\"Александровна\",\"\",\"\",0]'),
+(1273, 17, 'Имя пользователя', 0, '[\"Рученькин\",\"Андрей\",\"Александрович\",\"\",\"\",0]'),
 (1274, 17, 'Имя пользователя', 0, '[\"Рученькина\",\"Наринэ\",\"Суреновна\",\"\",\"\",0]'),
 (1275, 19, 'УСО/ШУ', 0, '[\"УСО ПЭБ\",\"\"]'),
 (1276, 19, 'Шкаф', 1275, '[\"АСУЭ.021.УСО\",\"АСУЭ.021.УСО\",3844]'),
-(1277, 19, 'Устройство', 1276, '[\"BR (ПЛК RX3i)\",\"\",\"нет\",\"нет\"]'),
+(1277, 19, 'Устройство', 1276, '[\"BR (ПЛК RX3i)\",\"RX3i\",\"нет\",\"нет\"]'),
 (1280, 19, 'Плата', 1277, '[\"BR1 (БП 16 RX3i)\",\"\",\"BR1\",\"IC695CHS016\"]'),
 (1281, 19, 'Модуль', 1280, '[\"BR1.12 (MDL660)\",\"Модуль дискретного ввода RX3i\",\"BR1.12\",\"IC694MDL660\",\"DI\"]'),
 (1284, 19, 'Модуль', 1280, '[\"BR1.11 (ALG616)\",\"Модуль аналогового ввода RX3i\",\"BR1.11\",\"IC695ALG616\",\"AI\"]'),
@@ -328,8 +328,17 @@ CREATE TABLE `tasks` (
   `check_list` varchar(2048) NOT NULL,
   `date_begin` datetime NOT NULL,
   `dead_line` datetime NOT NULL,
+  `no_dead_line` tinyint(1) NOT NULL,
   `status` int(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Дамп данных таблицы `tasks`
+--
+
+INSERT INTO `tasks` (`id`, `name`, `info`, `file_list`, `check_list`, `date_begin`, `dead_line`, `no_dead_line`, `status`) VALUES
+(1, 'Задача admin', '', '[]', '[]', '2017-12-08 13:05:08', '2017-12-08 00:00:00', 1, 2),
+(2, 'Задача admin2', '', '[]', '[]', '2017-12-08 13:05:39', '2017-12-08 00:00:00', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -343,6 +352,18 @@ CREATE TABLE `tasks_people` (
   `id_task` int(11) NOT NULL,
   `role` varchar(32) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Дамп данных таблицы `tasks_people`
+--
+
+INSERT INTO `tasks_people` (`id`, `login`, `id_task`, `role`) VALUES
+(1, 'admin2', 1, 'director'),
+(2, 'admin', 1, 'responsible'),
+(3, 'admin3', 1, 'observer'),
+(4, 'admin', 2, 'director'),
+(5, 'admin2', 2, 'responsible'),
+(6, 'admin3', 2, 'observer');
 
 -- --------------------------------------------------------
 
@@ -546,13 +567,13 @@ ALTER TABLE `table_tree_big`
 -- AUTO_INCREMENT для таблицы `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT для таблицы `tasks_people`
 --
 ALTER TABLE `tasks_people`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
