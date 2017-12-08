@@ -522,19 +522,37 @@
                     switch($nQuery)
                     {
                         case 300: // Запрос списка задач по логину все три типа
+                            echo json_encode([getTasksPerFilter("responsible"), getTasksPerFilter("director"), getTasksPerFilter("observer")]);
                             break;
                         case 301: // Добавить новую задачу
+                            query("INSERT INTO tasks(name, info, file_list, check_list, date_begin, dead_line, no_dead_line, status) VALUES(%s, %s, %s, %s, %s, %s, %i, %i)", $param);
+                            $insertID = $mysqli->insert_id;
+                            query("INSERT INTO tasks_people(login, id_task, role) VALUES(%s, %i, %s)", [$paramL, $mysqli->insert_id, "director"]);
+                            echo json_encode(["Index", $insertID]);
                             break;
-                        case 302: // Изменить существующую задачу (проверка на роль)
+                        case 302: // Добавить связь с задачами по логинам
+                            query("INSERT INTO tasks_people(login, id_task, role) VALUES(%s, %i, %s)", [$param[1]["responsible"], $param[0], "responsible"]);
+                            if(array_key_exists("observer", $param[1]))
+                            {
+                                for($i = 0; $i < count($param[1]["observer"]); $i++)
+                                    query("INSERT INTO tasks_people(login, id_task, role) VALUES(%s, %i, %s)", [$param[1]["observer"][$i], $param[0], "observer"]);
+                            }
                             break;
-                        case 303: // Изменить статус задачи (проверка на роль)
+                        case 303: // Изменить существующую задачу (проверка на роль)
                             break;
-                        case 304: // Запрос количества задач по логину
+                        case 304: // Изменить статус задачи (проверка на роль)
                             break;
-                        case 305: // Загрузка файлов
+                        case 305: // Запрос количества задач по логину
                             break;
-                        case 306: // Список всех логинов с фамилией
+                        case 306: // Загрузка файлов на сервер
+                            break;
+                        case 307: // Загрузка списка(ссылки) файлов на клиента
+                            break;
+                        case 308: // Список всех логинов с фамилией
                             getNameForLogin();
+                            break;
+                        case 309: // Запрос списка проектов доступных по логину на просмотр
+                            request("SELECT id, name_table FROM table_big WHERE id IN (SELECT id_table FROM rights WHERE login = %s AND rights & 1)", [$paramL]);
                             break;
                     }
         }
@@ -642,5 +660,28 @@
                 $out .= ",".(int)$row[0];
                 getAllChildrenForRemove((int)$row[0]);
             }
+    }
+    function getTasksPerFilter($filter)
+    {
+        global $paramL;
+        $out = [];
+        if($result = query("SELECT tasks.id, tasks.name, tasks.date_begin, tasks.dead_line, tasks.no_dead_line, tasks.status, tasks_people.login, tasks_people.role FROM tasks LEFT JOIN tasks_people ON (tasks.id = tasks_people.id_task) WHERE tasks.id IN (SELECT id_task FROM tasks_people WHERE login = %s AND role = '$filter') ORDER by tasks.id", [$paramL]))
+        while($row = $result->fetch_array(MYSQLI_NUM)) 
+        {
+            if(array_key_exists($row[0], $out) == false)
+                $out[$row[0]] = [$row[0], $row[1], "", "", $row[2], $row[4] == 1 ? "Без срока" : $row[3], $row[5]];
+            switch($row[7])
+            {
+                case "director":
+                    $out[$row[0]][2] = $row[6];
+                    break;
+                case "responsible":
+                    $out[$row[0]][3] = $row[6];
+                    break;
+                case "observer":
+                    break;
+            }
+        }
+        return $out;
     }
 ?>				
