@@ -1,7 +1,9 @@
 <?php
 	include("config.php");
 	include("query.php");
-	include("functions.php");
+    include("functions.php");
+    $excelNumber = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
+    $countExcelNumber = count($excelNumber);
 	$param = null;
 	$a = null;
 	$Result = "";
@@ -124,8 +126,11 @@
                         request("SELECT name_table, id FROM table_big", []);//
                         break;
                     case 43: // Запрос списка таблиц
-                        request("SELECT name_table, id FROM table_initialization", []);//
-                    break;
+                        request("SELECT name_table, id FROM table_initialization", []);
+                        break;
+                    case 44:
+                        request("SELECT COUNT(*) FROM tasks_people LEFT JOIN tasks ON (tasks.id = tasks_people.id_task) WHERE tasks_people.role = 'responsible' AND tasks_people.login = %s AND tasks.status != 2", [$paramL]);
+                        break;
                 }
             if($nQuery >= 50 && $nQuery < 100) // Работа с шаблонами и типами
                 if($out_rights[0])
@@ -184,8 +189,10 @@
                             request("UPDATE type SET _default = %s WHERE name = %s", [$param[1], $param[0]]);
                             break;
                         case 56: // Удаление шаблона
+                            query("DELETE FROM template WHERE name = %s", $param); 
                             break;
                         case 57: // Удаление типа
+                            query("DELETE FROM type WHERE name = %s", $param); 
                             break;
                         case 58: // Запрос списка шаблонов
                             request("SELECT name, status FROM template", []);
@@ -320,6 +327,9 @@
                             if(!checkRightsForTableTemplate(2, $paramL, $id)) { break; };
                             query("DELETE FROM table_init_$id WHERE id = %i", [$param[1]]);
                             break;
+                        case 70:
+                            query("DELETE FROM big_template WHERE name = %s", $param); 
+                            break;
                     }
             if($nQuery >= 100 && $nQuery < 150) // Работа с Данными
                 if($out_rights[1])
@@ -398,7 +408,8 @@
                                                 "data" => $OutTable, 
                                                 "type" => $Type, 
                                                 "rights" => $Rights, 
-                                                "templates" => $templates]);
+                                                "templates" => $templates,
+                                                "name" => $Head[1]]);
                             break;
                         case 105: // Добавление строк в таблицу
                             $id = (int)($param[0]);
@@ -451,14 +462,121 @@
                             /* echo "template = ".$param[1]."\n";
                             echo "parent = ".$param[2]."\n"; */
                             break;
-                    }
+                        case 111: // Экспорт таблицы добавить проверку на права
+                                // Проверка на права
+                            $_param = json_decode($param);
+
+                            $_param[0] = (array)$_param[0]; // шаблоны
+                            $_param[1] = (array)$_param[1]; // заголовки
+                            $_param[2] = (array)$_param[2]; // данные
+                            $c = count($_param[0]);
+                            for($i = 0; $i < $c; $i++)
+                                $_param[0][$i] = (array)$_param[0][$i];
+                            $c = count($_param[2]);
+                            for($i = 0; $i < $c; $i++)
+                            {
+                                $_param[1][$i] = (array)$_param[1][$i];
+                                $_param[2][$i] = (array)$_param[2][$i];
+                                $c1 = count($_param[2][$i]);
+                                for($k = 0; $k < $c1; $k ++)
+                                    $_param[2][$i][$k] = (array)$_param[2][$i][$k];
+                            }
+
+                            $data = (array)$_param[2];
+                            require_once dirname(__FILE__) . '/PHPExcel.php';
+                            $objPHPExcel = new PHPExcel();
+                            $styleArray = [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'startcolor' => [ 'rgb' => "70C8FF" ]
+                                ],
+                                'borders' => [
+                                    'top' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                    'left' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                    'right' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                    'bottom' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                ]
+                            ];
+                            $styleArrayHeader = 
+                            [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'startcolor' => [ 'rgb' => "70C8FF" ]
+                                ],
+                                'borders' => [
+                                    'top' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                    'left' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                    'right' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                    'bottom' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
+                                ]
+                            ];
+                            /* $objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
+                                                        ->setLastModifiedBy("Maarten Balliauw")
+                                                        ->setTitle("Office 2007 XLSX Test Document")
+                                                        ->setSubject("Office 2007 XLSX Test Document")
+                                                        ->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
+                                                        ->setKeywords("office 2007 openxml php")
+                                                        ->setCategory("Test result file"); */                            
+                            $objPHPExcel->getProperties()->setDescription(json_encode([$_param[0], $_param[1]]));
+                            $out = $objPHPExcel->setActiveSheetIndex(0);
+                            $idTable = -1;
+                            $c = count($data);
+                            for($i = 0; $i < $c; $i++)
+                            {
+                                $c1 = count($data[$i]) * 2;
+                                for($k = 0; $k < $c1; $k += 2)
+                                {
+                                    $j = $k / 2;
+                                    $objPHPExcel->getActiveSheet()->getColumnDimension(getExcelColumn($k + 1))->setCollapsed(false);
+                                    $objPHPExcel->getActiveSheet()->getColumnDimension(getExcelColumn($k + 1))->setVisible(false);
+                                    if($i == 0) // Заголовок
+                                    {
+                                        if($idTable != (int)$_param[1][$j]["idTable"])
+                                        {
+                                            $idTable = (int)$_param[1][$j]["idTable"];
+                                            $out->setCellValueByColumnAndRow($k, 1, $_param[0][$idTable]["name"]);
+                                            $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k)."1:".getExcelColumn($k + (int)$_param[0][$idTable]["n"]*2 - 2)."1")->applyFromArray($styleArrayHeader);
+                                        }
+                                        $out->setCellValueByColumnAndRow($k, 2, $_param[1][$j]["name"]);
+                                        $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k)."2")->applyFromArray($styleArrayHeader);
+                                    }
+                                    // тело
+                                    $out->setCellValueByColumnAndRow($k, $i + 3, $data[$i][$j]["data"]);
+                                    $out->setCellValueByColumnAndRow($k + 1, $i + 3, json_encode($data[$i][$j]));
+                                    $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k + 1).($i + 3))->getNumberFormat()->setFormatCode(';;;');
+                                    if($data[$i][$j]["block"] == "1") $styleArray['fill']['startcolor']['rgb'] = 'e8f6ff';
+                                    else $styleArray['fill']['startcolor']['rgb'] = 'f1ffe8';
+                                    $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k).($i + 3))->applyFromArray($styleArray);
+                                }
+                            }
+                            // Rename worksheet
+                            /*$objPHPExcel->getActiveSheet()->setTitle('Simple');
+                            $objPHPExcel->setActiveSheetIndex(0); */
+                            
+                            $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+                            $nameFile = str_replace(" ", "_", $_param[3].date("_m_d_y_H_i_s"));
+                            $objWriter->save("../reports/$nameFile.xlsx");
+                            echo json_encode(["http://localhost:80/reports/$nameFile.xlsx", $nameFile]);
+                            break;
+                        case 112:
+                            break;
+                        case 113: // Получение ссылки на таблицу по id
+                            $id = (int)($param[0]);
+                            $Rights = getRightsForTable("rights", $paramL, $id);
+                            $out = false;
+                            if($Rights[0] == 0) { echo json_encode([-1]); break; }
+                            if($result = query("SELECT name_table FROM table_big WHERE id = %i", [$id]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) { echo json_encode([$row[0]]); $out = true; }
+                            if(!$out) echo json_encode([""]);
+                            break;
+                        }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями
                 if($out_rights[2])
                     switch($nQuery)
                     {
                         case 150: // Запрос списка пользователей
                             //request("SELECT login, role, name, mail FROM registration", []);
-                            getNameForLogin();
+                            getAllNameForLogin();
                             break;
                         case 151: // Запрос списка ролей
                             request("SELECT id, name, rights FROM roles", []);
@@ -517,7 +635,7 @@
                     {
 
                     }
-            if($nQuery >= 300 && $nQuery < 350) // Работа с Событиями
+            if($nQuery >= 300 && $nQuery < 350) // Работа с Задачами
                 if($out_rights[6])
                     switch($nQuery)
                     {
@@ -539,43 +657,91 @@
                             }
                             break;
                         case 303: // Изменить существующую задачу (проверка на роль)
+                            $errorRights = true;  
+                            if($result = query("SELECT role FROM tasks_people WHERE id_task = %i AND login = %s", [$param[7], $paramL]))
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    if($row[0] == "director") $errorRights = false;
+                            if(!$errorRights)
+                                query("UPDATE tasks SET check_list = %s, dead_line = %s, no_dead_line = %i, status = %i WHERE id = %i", [$param[3], $param[4], $param[5], $param[6], $param[7]]);
                             break;
                         case 304: // Изменить статус задачи (проверка на роль)
+                            $errorRights = true;  
+                            if($result = query("SELECT role FROM tasks_people WHERE id_task = %i AND login = %s", [$param[0], $paramL]))
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    if($row[0] == "director" || $row[0] == "responsible") $errorRights = false;
+                            if(!$errorRights)
+                                query("UPDATE tasks SET status = %i WHERE id = %i", [$param[1], $param[0]]);
                             break;
-                        case 305: // Запрос количества задач по логину
+                        case 305: // Изменить чек-лист
+                            $errorRights = true;  
+                            if($result = query("SELECT role FROM tasks_people WHERE id_task = %i AND login = %s", [$param[0], $paramL]))
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                    if($row[0] == "director" || $row[0] == "responsible") $errorRights = false;
+                            if(!$errorRights)
+                                query("UPDATE tasks SET check_list = %s WHERE id = %i", [$param[1], $param[0]]);
                             break;
                         case 306: // Загрузка файлов на сервер
                             break;
                         case 307: // Загрузка списка(ссылки) файлов на клиента
                             break;
                         case 308: // Список всех логинов с фамилией
-                            getNameForLogin();
+                            getAllNameForLogin();
                             break;
                         case 309: // Запрос списка проектов доступных по логину на просмотр
                             request("SELECT id, name_table FROM table_big WHERE id IN (SELECT id_table FROM rights WHERE login = %s AND rights & 1)", [$paramL]);
                             break;
-                    }
+                        case 310: // Загрузка задачи по id проверка на роль
+                            $Result = [];
+                            $Result["task"] = [];    
+                            $Result["tasks_people"] = []; 
+                            $errorRights = true;  
+                            $nameFields = getTemplatePosition("Имя пользователя");
+                            if($result = query("SELECT login, role, id FROM tasks_people WHERE id_task = %i", $param))
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
+                                {
+                                    if($row[0] == $paramL) $errorRights = false;
+                                    $Result["tasks_people"][] = [getNameForLogin($row[0], $nameFields), $row[1], $row[2], $row[0]];
+                                }
+                            if(!$errorRights)
+                            {
+                                if($result = query("SELECT * FROM tasks WHERE id = %i", $param))
+                                    while ($row = $result->fetch_array(MYSQLI_NUM)) $Result["task"] = $row;
+                                echo json_encode($Result);
+                            }
+                            break;
+                        case 311: // Установка прав на проект с данными
+                            $id_table = (int)$param[0];
+                            $id_right = -1;
+                            if($result = query("SELECT id FROM rights WHERE id_table = %i AND login = %s", [$id_table, $param[1]["responsible"]]))
+                                while ($row = $result->fetch_array(MYSQLI_NUM)) $id_right = $row[0];
+                            if($id_right == -1)
+                                request("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", [$id_table, $param[1]["responsible"], 3]); // Добавление права на просмотр и редактирование
+                            else request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", [$id_table, $param[1]["responsible"], 3, $id_right]); // Обновление права на просмотр и редактирование
+                            $c = count($param[1]["observer"]);
+                            for($i = 0; $i < $c; $i++)
+                            {
+                                $id_right = -1;
+                                if($result = query("SELECT id FROM rights WHERE id_table = %i AND login = %s", [$id_table, $param[1]["observer"][$i]]))
+                                    while ($row = $result->fetch_array(MYSQLI_NUM)) $id_right = $row[0];
+                                if($id_right == -1)
+                                    request("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", [$id_table, $param[1]["observer"][$i], 1]); // Добавление права на просмотр
+                                else request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", [$id_table, $param[1]["observer"][$i], 1, $id_right]); // Обновление права на просмотр
+                            }
+                            break;
+                        }
         }
     }
     $mysqli->close();
     
-    function getNameForLogin() // Получает список всех логинов с именами, если имеется
+    function getAllNameForLogin() // Получает список всех логинов с именами, если имеется
     {
         $listLogin = []; // Выходной список логинов с ролями и именами
-        $nameFields = []; // Массив с положением полей в шаблоне Имя пользователя
         $in = []; // временный массив
         
         if($result = query("SELECT login, role FROM registration", []))
             while($row = $result->fetch_array(MYSQLI_NUM)) 
                 $listLogin[$row[0]] = (object) array("role" => $row[1], "name" => "");
-        if($result = query("SELECT fields FROM template WHERE name = 'Имя пользователя'", []))
-            while($row = $result->fetch_array(MYSQLI_NUM))
-            {
-                $in = json_decode($row[0]);
-                $c = count($in);
-                for($i = 0; $i < $c; $i++)
-                    $nameFields[$in[$i]->name] = $i;
-            }   
+        $nameFields = getTemplatePosition("Имя пользователя");
         if($result = query("SELECT fields FROM table_tree_big WHERE template = 'Имя пользователя'", []))
             while($row = $result->fetch_array(MYSQLI_NUM))
             {
@@ -590,6 +756,36 @@
                 } 
             }
         echo json_encode($listLogin);
+    }
+    function getTemplatePosition($name)
+    {
+        $nameFields = []; // Массив с положением полей в шаблоне Имя пользователя
+        $in = []; // временный массив
+        if($result = query("SELECT fields FROM template WHERE name = 'Имя пользователя'", []))
+            while($row = $result->fetch_array(MYSQLI_NUM))
+            {
+                $in = json_decode($row[0]);
+                $c = count($in);
+                for($i = 0; $i < $c; $i++)
+                    $nameFields[$in[$i]->name] = $i;
+            }
+        return $nameFields;
+    }
+    function getNameForLogin($login, $nameFields)
+    {
+        $in = []; // временный массив
+        if($result = query("SELECT fields FROM table_tree_big WHERE template = 'Имя пользователя'", []))
+            while($row = $result->fetch_array(MYSQLI_NUM))
+            {
+                $in = json_decode($row[0]);
+                if($login == $in[$nameFields["Логин"]])
+                {
+                    $name = $in[$nameFields["Имя"]];
+                    $name2 = $in[$nameFields["Отчество"]];
+                    return $in[$nameFields["Фамилия"]]." ".mb_substr($name, 0, 1, "UTF-8").". ".mb_substr($name2, 0, 1, "UTF-8").".";
+                } 
+            }
+        return $login;
     }
     function request($_query, $param)
     {
@@ -682,6 +878,22 @@
                     break;
             }
         }
+        return $out;
+    }
+    function getExcelColumn($n)
+    {
+        global $excelNumber, $countExcelNumber;
+        $out = "";
+        $i = $n > 0 ? floor(log($n, $countExcelNumber)) : 0;
+        $n += pow($countExcelNumber, $i + 1) - $countExcelNumber * $i;
+        for($j = $i; $j > 0; $j--)
+            $n -= pow($countExcelNumber, $j) - $countExcelNumber;
+        do 
+        { 
+            $out = $excelNumber[($n % $countExcelNumber)].$out; 
+            $n /= $countExcelNumber; 
+        } 
+        while($n >= $countExcelNumber);
         return $out;
     }
 ?>				
