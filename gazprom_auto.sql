@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Время создания: Дек 22 2017 г., 15:46
+-- Время создания: Дек 25 2017 г., 15:36
 -- Версия сервера: 10.1.28-MariaDB
 -- Версия PHP: 7.1.10
 
@@ -106,10 +106,11 @@ CREATE TABLE `rights` (
 --
 
 INSERT INTO `rights` (`id`, `id_table`, `login`, `rights`) VALUES
-(27, 17, 'admin', 11),
+(27, 17, 'admin', 3),
 (29, 19, 'admin', 3),
 (30, 19, 'admin2', 3),
-(31, 19, 'admin3', 1);
+(31, 19, 'admin3', 1),
+(32, 2017, 'admin', 3);
 
 -- --------------------------------------------------------
 
@@ -173,7 +174,7 @@ CREATE TABLE `signin` (
 --
 
 INSERT INTO `signin` (`id`, `login`, `checkkey`, `countreg`, `captcha`, `date`) VALUES
-('GNo8pNbvRww', 'admin', '3ae11347c90eca4749fc84fac91a7b40', 0, '', '2017-12-22 15:40:26'),
+('GNo8pNbvRww', 'admin', '3ae11347c90eca4749fc84fac91a7b40', 0, '', '2017-12-25 15:22:49'),
 ('G2382WMJO44', 'admin', 'b3df1ea4c44c0edc63d40e298fe1b940', 0, '', '2017-12-05 13:22:09');
 
 -- --------------------------------------------------------
@@ -365,7 +366,9 @@ INSERT INTO `tasks` (`id`, `name`, `info`, `file_list`, `check_list`, `date_begi
 (3, 'Задача admin3', '', '{\"files\":[],\"table\":\"\"}', '[]', '2017-12-11 15:30:19', '2017-12-11 00:00:00', 1, 0),
 (4, 'Задача мне', '', '{\"files\":[],\"table\":\"\"}', '[{\"value\":\"Это выполнить\",\"end\":true},{\"value\":\"И это выполнить\",\"end\":true},{\"value\":\"А еще это\"}]', '2017-12-12 08:14:04', '2017-12-12 00:00:00', 1, 0),
 (5, 'Тест наблюдателя', '1111 2222 3333', '{\"files\":[],\"table\":\"\"}', '[{\"value\":\"FUCK OFF!!!\"}]', '2017-12-21 10:41:01', '2017-12-21 00:00:00', 1, 0),
-(6, 'Тест 1', '', '{\"files\":[],\"table\":\"19\"}', '[{\"value\":\"q\"}]', '2017-12-21 12:51:44', '2017-12-22 00:00:00', 1, 0);
+(6, 'Тест 1', '', '{\"files\":[],\"table\":\"19\"}', '[{\"value\":\"q\",\"end\":true}]', '2017-12-21 12:51:44', '2017-12-22 00:00:00', 1, 2),
+(13, '1', '', '{\"files\":[{\"name\":\"281381_original.jpg\",\"fullName\":\"281381_original_12_25_17_14_42_03.jpg\"},{\"name\":\"1452097927_923.jpg\",\"fullName\":\"1452097927_923_12_25_17_14_42_06.jpg\"},{\"name\":\"AEXwDc0zF0M.jpg\",\"fullName\":\"AEXwDc0zF0M_12_25_17_14_42_08.jpg\"}],\"table\":17}', '[]', '2017-12-25 14:42:10', '2017-12-25 00:00:00', 1, 0),
+(14, 'Задача', '', '{\"files\":[{\"name\":\"depositphotos_128503780-stock-illustration-eye-symbol-logo-icon.jpg\",\"fullName\":\"depositphotos_128503780-stock-illustration-eye-symbol-logo-icon_12_25_17_15_04_11.jpg\"},{\"name\":\"evil-plan-baby.jpg\",\"fullName\":\"evil-plan-baby_12_25_17_15_04_14.jpg\"},{\"name\":\"1452097927_923.jpg\",\"fullName\":\"1452097927_923_12_25_17_15_04_28.jpg\"}],\"table\":17}', '[]', '2017-12-25 15:04:51', '2017-12-25 00:00:00', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -398,10 +401,13 @@ INSERT INTO `tasks_people` (`id`, `login`, `id_task`, `role`) VALUES
 (11, 'admin2', 5, 'director'),
 (12, 'admin2', 5, 'responsible'),
 (13, 'admin', 5, 'observer'),
-(14, 'admin', 2017, 'director'),
 (15, 'admin', 6, 'director'),
 (16, 'admin', 6, 'responsible'),
-(17, 'admin3', 6, 'observer');
+(17, 'admin3', 6, 'observer'),
+(30, 'admin', 13, 'director'),
+(31, 'admin', 13, 'responsible'),
+(32, 'admin', 14, 'director'),
+(33, 'admin', 14, 'responsible');
 
 -- --------------------------------------------------------
 
@@ -557,7 +563,7 @@ ALTER TABLE `type`
 -- AUTO_INCREMENT для таблицы `rights`
 --
 ALTER TABLE `rights`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT для таблицы `rights_template`
@@ -605,13 +611,13 @@ ALTER TABLE `table_tree_big`
 -- AUTO_INCREMENT для таблицы `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT для таблицы `tasks_people`
 --
 ALTER TABLE `tasks_people`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

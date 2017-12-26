@@ -6,7 +6,8 @@
     $countExcelNumber = count($excelNumber);
 	$param = null;
 	$a = null;
-	$Result = "";
+    $Result = "";
+    $paramL = $paramC = $paramI = null;
 	if (array_key_exists('nquery', $_GET) || array_key_exists('nquery', $_POST))
 	{
 		if (array_key_exists('nquery', $_GET))
@@ -43,6 +44,27 @@
     if (mysqli_connect_errno()) { echo("Не могу создать соединение"); exit(); }
     $mysqli->set_charset("utf8");
 
+    if($nQuery == -1)
+    {
+        $checkTable = false;
+        $checkLogin = false;
+        if($result = query("SHOW TABLES LIKE 'registration'", []))
+            while ($row = $result->fetch_array(MYSQLI_NUM)) $checkTable = true;
+        if(!$checkTable) 
+        { 
+            $sql = file_get_contents("../gazprom_auto.sql");
+            $mysqli->multi_query($sql);
+        }
+        if($result = query("SELECT login FROM registration WHERE login = 'admin'", []))
+            while ($row = $result->fetch_array(MYSQLI_NUM)) $checkLogin = true;
+        if(!$checkLogin) 
+        { 
+            query("INSERT INTO registration VALUES(%s, %s, %i, %s, %s)", ["admin", "mwork92@gmail.com", "1", "@DATE@", "admin"]);
+            query("INSERT INTO password VALUES(%s, %s)", ["admin", "$2a$10$644bb3233e1ff251b4b4eumdZjoiZjWjFLyol.Ad7uUoNWlWCpz.u"]);
+        }
+        exit();
+    }
+    //file_get_contents
     if($nQuery < 50)
         switch($nQuery)
         {
@@ -680,9 +702,9 @@
                             if(!$errorRights)
                                 query("UPDATE tasks SET check_list = %s WHERE id = %i", [$param[1], $param[0]]);
                             break;
-                        case 306: // Загрузка файлов на сервер
+                        case 306:
                             break;
-                        case 307: // Загрузка списка(ссылки) файлов на клиента
+                        case 307:
                             break;
                         case 308: // Список всех логинов с фамилией
                             getAllNameForLogin();
@@ -728,6 +750,40 @@
                                 else request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", [$id_table, $param[1]["observer"][$i], 1, $id_right]); // Обновление права на просмотр
                             }
                             break;
+                        case 312: // Загрузка файлов на сервер
+                            if (!file_exists("../tmp")) mkdir("../tmp", 0700);
+                            if($_FILES["filename"]["size"] > 1024*3*1024)
+                            {
+                                echo json_encode(["Размер файла превышает три мегабайта"]);
+                                exit;
+                            }
+                            if(is_uploaded_file($_FILES["filename"]["tmp_name"]))// Проверяем загружен ли файл
+                            {
+                                list($w_i, $h_i, $type) = getimagesize($_FILES["filename"]["tmp_name"]);
+                                $types = ['gif','jpeg','png','jpg'];
+                                if (array_key_exists($type, $types))
+                                {
+                                    $name = iconv("UTF-8", "WINDOWS-1251", $_FILES["filename"]["name"]);
+                                    $end = strripos($name, "."); 
+                                    $name = substr($name, 0, $end).date("_m_d_y_H_i_s").substr($name, $end);
+                                    echo json_encode(["OK", $_FILES["filename"]["name"], $name]);
+                                } 
+                                else { echo json_encode(["Некорректный формат файла"]); return; }
+                            }
+                            else echo json_encode(["Ошибка загрузки файла"]);
+                            break;
+                        case 313: // Удаление файлов из временной папки
+                            unlink("../tmp/".$param[0]); 
+                            break;
+                        case 314: // Загрузка списка(ссылки) файлов на клиента
+                            $idTask = $param[0];
+                            $listFile = json_decode($param[1]);
+                            if (!file_exists("../files/tasks/$idTask")) mkdir("../files/tasks/$idTask", 0700);
+                            $c = count($listFile);
+                            for($i = 0; $i < $c; $i++)
+                                rename("../tmp/".$listFile[$i], "../files/tasks/$idTask/".$listFile[$i]); 
+                            break;
+                        
                         }
         }
     }
@@ -880,20 +936,21 @@
         }
         return $out;
     }
-    function getExcelColumn($n)
+    function getExcelColumn($digest)
     {
         global $excelNumber, $countExcelNumber;
-        $out = "";
-        $i = $n > 0 ? floor(log($n, $countExcelNumber)) : 0;
-        $n += pow($countExcelNumber, $i + 1) - $countExcelNumber * $i;
-        for($j = $i; $j > 0; $j--)
-            $n -= pow($countExcelNumber, $j) - $countExcelNumber;
-        do 
-        { 
-            $out = $excelNumber[($n % $countExcelNumber)].$out; 
-            $n /= $countExcelNumber; 
-        } 
-        while($n >= $countExcelNumber);
-        return $out;
+        $digest++;
+        $result;
+        $str = "";
+        while(($digest != 0) || ($digest > $countExcelNumber)) {
+            if($digest % $countExcelNumber == 0) {
+                $str = $excelNumber[$countExcelNumber - 1].$str;
+                $digest--;
+            }
+            else $str = $excelNumber[$digest % $countExcelNumber - 1].$str;
+            $digest = (int)($digest / $countExcelNumber);
+        }
+        $result = $str;
+        return $result;
     }
 ?>				
