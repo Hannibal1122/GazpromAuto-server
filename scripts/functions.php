@@ -81,4 +81,60 @@
 	{  
 		return crypt($password, '$2a$10$'.$unique_salt); 
     }
+    function getExcelColumn($digest)
+    {
+        global $excelNumber, $countExcelNumber;
+        $digest++;
+        $result;
+        $str = "";
+        while(($digest != 0) || ($digest > $countExcelNumber)) {
+            if($digest % $countExcelNumber == 0) {
+                $str = $excelNumber[$countExcelNumber - 1].$str;
+                $digest--;
+            }
+            else $str = $excelNumber[$digest % $countExcelNumber - 1].$str;
+            $digest = (int)($digest / $countExcelNumber);
+        }
+        $result = $str;
+        return $result;
+    }
+    function loadFile($maxSize, $types)
+    {
+        if (!file_exists("../tmp")) mkdir("../tmp", 0700);
+        if($_FILES["filename"]["size"] > 1024*$maxSize*1024)
+        {
+            return json_encode(["Размер файла превышает три мегабайта"]);
+            exit;
+        }
+        if(is_uploaded_file($_FILES["filename"]["tmp_name"]))// Проверяем загружен ли файл
+        {
+            $name = $_FILES["filename"]["name"];
+            $end = strripos($name, "."); 
+            $type = substr($name, $end + 1);
+            if (in_array($type, $types))
+            {
+                $name = substr($name, 0, $end).date("_m_d_y_H_i_s").substr($name, $end);
+                move_uploaded_file($_FILES["filename"]["tmp_name"], "../tmp/".$name);
+                return json_encode(["OK", $_FILES["filename"]["name"], $name]);
+            } 
+            else return json_encode(["Некорректный формат файла $type"]);
+        }
+        else return json_encode(["Ошибка загрузки файла"]);
+    }
+    function checkL($array, $login) // Проверка логина
+	{
+		for ($i = 0;  $i < count($array); $i++)
+			if($array[$i] == $login) return json_encode(["yes"]);
+		return json_encode(["no"]);
+    }
+    function recodeRights($_rights, $n) // Права хранятся в int формате побитово
+    {
+        $out = [];
+        for($i = 0; $i < $n; $i++)
+        {
+            $out[] = $_rights & 1;  
+            $_rights >>= 1;
+        }
+        return $out;
+    }
 ?>	

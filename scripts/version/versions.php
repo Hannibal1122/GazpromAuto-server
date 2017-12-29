@@ -75,6 +75,8 @@
 			"main.php",
 			"query.php",
 			"registration.php",
+			"exportToExcel.php",
+			"importFromExcel.php",
 			"version/versions.php"
 		)
 	);

@@ -44,7 +44,7 @@
     if (mysqli_connect_errno()) { echo("Не могу создать соединение"); exit(); }
     $mysqli->set_charset("utf8");
 
-    if($nQuery == -1)
+    if($nQuery == -1) // Установка
     {
         $checkTable = false;
         $checkLogin = false;
@@ -150,8 +150,20 @@
                     case 43: // Запрос списка таблиц
                         request("SELECT name_table, id FROM table_initialization", []);
                         break;
-                    case 44:
-                        request("SELECT COUNT(*) FROM tasks_people LEFT JOIN tasks ON (tasks.id = tasks_people.id_task) WHERE tasks_people.role = 'responsible' AND tasks_people.login = %s AND tasks.status != 2", [$paramL]);
+                    case 44: // Количество задач
+                        request("SELECT COUNT(*) FROM tasks WHERE responsible = %s AND status != 2", [$paramL]);
+                        break;
+                    case 45:
+                        /* $param = ["тест", "", "{}", "[]", "2017-12-08 13:05:08", "2017-12-08 13:05:08", 1, "", "", ""];
+                        $array1 = ["admin", "admin2", "admin3"];
+                        for($i = 0; $i < 100000; $i++)
+                        {
+                            $param[7] = $array1[random_int(0, 2)];
+                            $param[8] = $array1[random_int(0, 2)]; 
+                            $param[9] = [$array1[random_int(0, 2)]];
+                            $param[9] = json_encode($param[9]);
+                            query("INSERT INTO tasks(name, info, file_list, check_list, date_begin, dead_line, no_dead_line, director, responsible, observer, status) VALUES(%s, %s, %s, %s, %s, %s, %i, %s, %s, %s, 0)", $param);
+                        } */
                         break;
                 }
             if($nQuery >= 50 && $nQuery < 100) // Работа с шаблонами и типами
@@ -484,105 +496,19 @@
                             /* echo "template = ".$param[1]."\n";
                             echo "parent = ".$param[2]."\n"; */
                             break;
-                        case 111: // Экспорт таблицы добавить проверку на права
-                                // Проверка на права
-                            $_param = json_decode($param);
-
-                            $_param[0] = (array)$_param[0]; // шаблоны
-                            $_param[1] = (array)$_param[1]; // заголовки
-                            $_param[2] = (array)$_param[2]; // данные
-                            $c = count($_param[0]);
-                            for($i = 0; $i < $c; $i++)
-                                $_param[0][$i] = (array)$_param[0][$i];
-                            $c = count($_param[2]);
-                            for($i = 0; $i < $c; $i++)
-                            {
-                                $_param[1][$i] = (array)$_param[1][$i];
-                                $_param[2][$i] = (array)$_param[2][$i];
-                                $c1 = count($_param[2][$i]);
-                                for($k = 0; $k < $c1; $k ++)
-                                    $_param[2][$i][$k] = (array)$_param[2][$i][$k];
-                            }
-
-                            $data = (array)$_param[2];
-                            require_once dirname(__FILE__) . '/PHPExcel.php';
-                            $objPHPExcel = new PHPExcel();
-                            $styleArray = [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'startcolor' => [ 'rgb' => "70C8FF" ]
-                                ],
-                                'borders' => [
-                                    'top' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                    'left' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                    'right' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                    'bottom' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                ]
-                            ];
-                            $styleArrayHeader = 
-                            [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'startcolor' => [ 'rgb' => "70C8FF" ]
-                                ],
-                                'borders' => [
-                                    'top' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                    'left' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                    'right' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                    'bottom' => [ 'style' => PHPExcel_Style_Border::BORDER_THIN, ],
-                                ]
-                            ];
-                            /* $objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
-                                                        ->setLastModifiedBy("Maarten Balliauw")
-                                                        ->setTitle("Office 2007 XLSX Test Document")
-                                                        ->setSubject("Office 2007 XLSX Test Document")
-                                                        ->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
-                                                        ->setKeywords("office 2007 openxml php")
-                                                        ->setCategory("Test result file"); */                            
-                            $objPHPExcel->getProperties()->setDescription(json_encode([$_param[0], $_param[1]]));
-                            $out = $objPHPExcel->setActiveSheetIndex(0);
-                            $idTable = -1;
-                            $c = count($data);
-                            for($i = 0; $i < $c; $i++)
-                            {
-                                $c1 = count($data[$i]) * 2;
-                                for($k = 0; $k < $c1; $k += 2)
-                                {
-                                    $j = $k / 2;
-                                    $objPHPExcel->getActiveSheet()->getColumnDimension(getExcelColumn($k + 1))->setCollapsed(false);
-                                    $objPHPExcel->getActiveSheet()->getColumnDimension(getExcelColumn($k + 1))->setVisible(false);
-                                    if($i == 0) // Заголовок
-                                    {
-                                        if($idTable != (int)$_param[1][$j]["idTable"])
-                                        {
-                                            $idTable = (int)$_param[1][$j]["idTable"];
-                                            $out->setCellValueByColumnAndRow($k, 1, $_param[0][$idTable]["name"]);
-                                            $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k)."1:".getExcelColumn($k + (int)$_param[0][$idTable]["n"]*2 - 2)."1")->applyFromArray($styleArrayHeader);
-                                        }
-                                        $out->setCellValueByColumnAndRow($k, 2, $_param[1][$j]["name"]);
-                                        $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k)."2")->applyFromArray($styleArrayHeader);
-                                    }
-                                    // тело
-                                    $out->setCellValueByColumnAndRow($k, $i + 3, $data[$i][$j]["data"]);
-                                    $out->setCellValueByColumnAndRow($k + 1, $i + 3, json_encode($data[$i][$j]));
-                                    $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k + 1).($i + 3))->getNumberFormat()->setFormatCode(';;;');
-                                    if($data[$i][$j]["block"] == "1") $styleArray['fill']['startcolor']['rgb'] = 'e8f6ff';
-                                    else $styleArray['fill']['startcolor']['rgb'] = 'f1ffe8';
-                                    $objPHPExcel->getActiveSheet()->getStyle(getExcelColumn($k).($i + 3))->applyFromArray($styleArray);
-                                }
-                            }
-                            // Rename worksheet
-                            /*$objPHPExcel->getActiveSheet()->setTitle('Simple');
-                            $objPHPExcel->setActiveSheetIndex(0); */
-                            
-                            $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
-                            $nameFile = str_replace(" ", "_", $_param[3].date("_m_d_y_H_i_s"));
-                            $objWriter->save("../reports/$nameFile.xlsx");
-                            echo json_encode(["http://localhost:80/reports/$nameFile.xlsx", $nameFile]);
+                        case 111: // Экспорт таблицы
+                            require_once './exportToExcel.php';
                             break;
-                        case 112:
+                        case 112: // Загрузка файлов на сервер
+                            echo loadFile(10, ['xlsx']);
                             break;
-                        case 113: // Получение ссылки на таблицу по id
+                        case 113: // Удаление временных файлов с сервера
+                            unlink("../tmp/".$param[0]); 
+                            break;
+                        case 114: // Импорт таблицы с проверкой на права
+                            require_once './importFromExcel.php';
+                            break;
+                        case 115: // Получение ссылки на таблицу по id
                             $id = (int)($param[0]);
                             $Rights = getRightsForTable("rights", $paramL, $id);
                             $out = false;
@@ -591,7 +517,7 @@
                                 while($row = $result->fetch_array(MYSQLI_NUM)) { echo json_encode([$row[0]]); $out = true; }
                             if(!$out) echo json_encode([""]);
                             break;
-                        }
+                    }
             if($nQuery >= 150 && $nQuery < 200) // Работа с Пользователями
                 if($out_rights[2])
                     switch($nQuery)
@@ -650,6 +576,9 @@
                         case 206: // Изменение права на таблицы инициализации
                             request("UPDATE rights_template SET id_table = %i, login = %s, rights = %i WHERE id = %i", $param);
                             break;
+                        case 207: // Список всех логинов с фамилией
+                            getAllNameForLogin();
+                            break;
                     }
             if($nQuery >= 250 && $nQuery < 300) // Работа с Событиями
                 if($out_rights[4])
@@ -662,47 +591,45 @@
                     switch($nQuery)
                     {
                         case 300: // Запрос списка задач по логину все три типа
-                            echo json_encode([getTasksPerFilter("responsible"), getTasksPerFilter("director"), getTasksPerFilter("observer")]);
+                            switch($param[0])
+                            {
+                                case "responsible":
+                                    request("SELECT id, name, director, responsible, date_begin, dead_line, no_dead_line, status FROM tasks WHERE responsible = %s", [$paramL]);
+                                    break;
+                                case "director":
+                                    request("SELECT id, name, director, responsible, date_begin, dead_line, no_dead_line, status FROM tasks WHERE director = %s", [$paramL]);
+                                    break;
+                                case "observer":
+                                    request("SELECT id, name, director, responsible, date_begin, dead_line, no_dead_line, status FROM tasks WHERE observer LIKE '%\"$paramL\"%'", []);
+                                    break;
+                            }
                             break;
                         case 301: // Добавить новую задачу
-                            query("INSERT INTO tasks(name, info, file_list, check_list, date_begin, dead_line, no_dead_line, status) VALUES(%s, %s, %s, %s, %s, %s, %i, %i)", $param);
+                            query("INSERT INTO tasks(name, info, file_list, check_list, date_begin, dead_line, no_dead_line, responsible, observer, status) VALUES(%s, %s, %s, %s, %s, %s, %i, %s, %s, %i)", $param);
                             $insertID = $mysqli->insert_id;
-                            query("INSERT INTO tasks_people(login, id_task, role) VALUES(%s, %i, %s)", [$paramL, $mysqli->insert_id, "director"]);
+                            query("UPDATE tasks SET director = %s WHERE id = %i", [$paramL, $insertID]);
                             echo json_encode(["Index", $insertID]);
                             break;
                         case 302: // Добавить связь с задачами по логинам
-                            query("INSERT INTO tasks_people(login, id_task, role) VALUES(%s, %i, %s)", [$param[1]["responsible"], $param[0], "responsible"]);
-                            if(array_key_exists("observer", $param[1]))
-                            {
-                                for($i = 0; $i < count($param[1]["observer"]); $i++)
-                                    query("INSERT INTO tasks_people(login, id_task, role) VALUES(%s, %i, %s)", [$param[1]["observer"][$i], $param[0], "observer"]);
-                            }
                             break;
                         case 303: // Изменить существующую задачу (проверка на роль)
-                            $errorRights = true;  
-                            if($result = query("SELECT role FROM tasks_people WHERE id_task = %i AND login = %s", [$param[7], $paramL]))
-                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
-                                    if($row[0] == "director") $errorRights = false;
-                            if(!$errorRights)
-                                query("UPDATE tasks SET check_list = %s, dead_line = %s, no_dead_line = %i, status = %i WHERE id = %i", [$param[3], $param[4], $param[5], $param[6], $param[7]]);
+                            query("UPDATE tasks SET info = %s, check_list = %s, dead_line = %s, no_dead_line = %i, status = %i WHERE id = %i AND director = %s", [$param[1], $param[3], $param[4], $param[5], $param[6], $param[7], $paramL]);
                             break;
                         case 304: // Изменить статус задачи (проверка на роль)
-                            $errorRights = true;  
-                            if($result = query("SELECT role FROM tasks_people WHERE id_task = %i AND login = %s", [$param[0], $paramL]))
-                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
-                                    if($row[0] == "director" || $row[0] == "responsible") $errorRights = false;
-                            if(!$errorRights)
-                                query("UPDATE tasks SET status = %i WHERE id = %i", [$param[1], $param[0]]);
+                            query("UPDATE tasks SET status = %i WHERE id = %i AND (director = %s OR responsible = %s)", [$param[1], $param[0], $paramL, $paramL]);
                             break;
                         case 305: // Изменить чек-лист
-                            $errorRights = true;  
-                            if($result = query("SELECT role FROM tasks_people WHERE id_task = %i AND login = %s", [$param[0], $paramL]))
-                                while ($row = $result->fetch_array(MYSQLI_NUM)) 
-                                    if($row[0] == "director" || $row[0] == "responsible") $errorRights = false;
-                            if(!$errorRights)
-                                query("UPDATE tasks SET check_list = %s WHERE id = %i", [$param[1], $param[0]]);
+                            query("UPDATE tasks SET check_list = %s WHERE id = %i AND (director = %s OR responsible = %s)", [$param[1], $param[0], $paramL, $paramL]);
                             break;
-                        case 306:
+                        case 306: // Количество задач по роли
+                            $out = [];
+                            if($result = query("SELECT COUNT(*) FROM tasks WHERE responsible = %s AND status != 2", [$paramL]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $out["responsible"] = $row[0];
+                            if($result = query("SELECT COUNT(*) FROM tasks WHERE director = %s AND status != 2", [$paramL]))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $out["director"] = $row[0];
+                            if($result = query("SELECT COUNT(*) FROM tasks WHERE observer LIKE '%\"$paramL\"%' AND status != 2", []))
+                                while($row = $result->fetch_array(MYSQLI_NUM)) $out["observer"] = $row[0];
+                            echo json_encode($out);
                             break;
                         case 307:
                             break;
@@ -715,62 +642,50 @@
                         case 310: // Загрузка задачи по id проверка на роль
                             $Result = [];
                             $Result["task"] = [];    
-                            $Result["tasks_people"] = []; 
+                            $Result["tasks_people"] = [];
                             $errorRights = true;  
                             $nameFields = getTemplatePosition("Имя пользователя");
-                            if($result = query("SELECT login, role, id FROM tasks_people WHERE id_task = %i", $param))
+                            if($result = query("SELECT director, responsible, observer FROM tasks WHERE id = %i", $param))
                                 while ($row = $result->fetch_array(MYSQLI_NUM)) 
                                 {
-                                    if($row[0] == $paramL) $errorRights = false;
-                                    $Result["tasks_people"][] = [getNameForLogin($row[0], $nameFields), $row[1], $row[2], $row[0]];
+                                    $logins = json_decode($row[2]);
+                                    array_unshift($logins, $row[0], $row[1]);
+                                    $c = count($logins);
+                                    for($i = 0; $i < $c; $i++)
+                                    {
+                                        if($logins[$i] == $paramL) $errorRights = false;
+                                        $Result["tasks_people"][] = [getNameForLogin($logins[$i], $nameFields), ($i == 0 ? "director" : ($i == 1 ? "responsible" : "observer")), 0, $logins[$i]];
+                                    }
                                 }
                             if(!$errorRights)
                             {
-                                if($result = query("SELECT * FROM tasks WHERE id = %i", $param))
+                                if($result = query("SELECT id, name, info, file_list, check_list, date_begin, dead_line, no_dead_line, status FROM tasks WHERE id = %i", $param))
                                     while ($row = $result->fetch_array(MYSQLI_NUM)) $Result["task"] = $row;
                                 echo json_encode($Result);
                             }
                             break;
                         case 311: // Установка прав на проект с данными
                             $id_table = (int)$param[0];
+                            if($id_table == -1) break;
                             $id_right = -1;
-                            if($result = query("SELECT id FROM rights WHERE id_table = %i AND login = %s", [$id_table, $param[1]["responsible"]]))
+                            if($result = query("SELECT id FROM rights WHERE id_table = %i AND login = %s", [$id_table, $param[1]]))
                                 while ($row = $result->fetch_array(MYSQLI_NUM)) $id_right = $row[0];
                             if($id_right == -1)
-                                request("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", [$id_table, $param[1]["responsible"], 3]); // Добавление права на просмотр и редактирование
-                            else request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", [$id_table, $param[1]["responsible"], 3, $id_right]); // Обновление права на просмотр и редактирование
-                            $c = count($param[1]["observer"]);
+                                request("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", [$id_table, $param[1], 3]); // Добавление права на просмотр и редактирование
+                            else request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", [$id_table, $param[1], 3, $id_right]); // Обновление права на просмотр и редактирование
+                            $c = count($param[2]);
                             for($i = 0; $i < $c; $i++)
                             {
                                 $id_right = -1;
-                                if($result = query("SELECT id FROM rights WHERE id_table = %i AND login = %s", [$id_table, $param[1]["observer"][$i]]))
+                                if($result = query("SELECT id FROM rights WHERE id_table = %i AND login = %s", [$id_table, $param[2][$i]]))
                                     while ($row = $result->fetch_array(MYSQLI_NUM)) $id_right = $row[0];
                                 if($id_right == -1)
-                                    request("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", [$id_table, $param[1]["observer"][$i], 1]); // Добавление права на просмотр
-                                else request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", [$id_table, $param[1]["observer"][$i], 1, $id_right]); // Обновление права на просмотр
+                                    request("INSERT INTO rights (id_table, login, rights) VALUES(%i, %s, %i)", [$id_table, $param[2][$i], 1]); // Добавление права на просмотр
+                                else request("UPDATE rights SET id_table = %i, login = %s, rights = %i WHERE id = %i", [$id_table, $param[2][$i], 1, $id_right]); // Обновление права на просмотр
                             }
                             break;
                         case 312: // Загрузка файлов на сервер
-                            if (!file_exists("../tmp")) mkdir("../tmp", 0700);
-                            if($_FILES["filename"]["size"] > 1024*3*1024)
-                            {
-                                echo json_encode(["Размер файла превышает три мегабайта"]);
-                                exit;
-                            }
-                            if(is_uploaded_file($_FILES["filename"]["tmp_name"]))// Проверяем загружен ли файл
-                            {
-                                list($w_i, $h_i, $type) = getimagesize($_FILES["filename"]["tmp_name"]);
-                                $types = ['gif','jpeg','png','jpg'];
-                                if (array_key_exists($type, $types))
-                                {
-                                    $name = iconv("UTF-8", "WINDOWS-1251", $_FILES["filename"]["name"]);
-                                    $end = strripos($name, "."); 
-                                    $name = substr($name, 0, $end).date("_m_d_y_H_i_s").substr($name, $end);
-                                    echo json_encode(["OK", $_FILES["filename"]["name"], $name]);
-                                } 
-                                else { echo json_encode(["Некорректный формат файла"]); return; }
-                            }
-                            else echo json_encode(["Ошибка загрузки файла"]);
+                            echo loadFile(10, ['gif','jpeg','png','jpg']);
                             break;
                         case 313: // Удаление файлов из временной папки
                             unlink("../tmp/".$param[0]); 
@@ -783,8 +698,7 @@
                             for($i = 0; $i < $c; $i++)
                                 rename("../tmp/".$listFile[$i], "../files/tasks/$idTask/".$listFile[$i]); 
                             break;
-                        
-                        }
+                    }
         }
     }
     $mysqli->close();
@@ -813,7 +727,7 @@
             }
         echo json_encode($listLogin);
     }
-    function getTemplatePosition($name)
+    function getTemplatePosition($name) // Положение полей в таблице
     {
         $nameFields = []; // Массив с положением полей в шаблоне Имя пользователя
         $in = []; // временный массив
@@ -827,7 +741,7 @@
             }
         return $nameFields;
     }
-    function getNameForLogin($login, $nameFields)
+    function getNameForLogin($login, $nameFields) // Получение полного имени из таблицы Пользователи по логину
     {
         $in = []; // временный массив
         if($result = query("SELECT fields FROM table_tree_big WHERE template = 'Имя пользователя'", []))
@@ -843,7 +757,7 @@
             }
         return $login;
     }
-    function request($_query, $param)
+    function request($_query, $param) // Отправка запроса и получение от вета в формате JSON
     {
         global $mysqli;
         $Result = [];
@@ -855,22 +769,6 @@
         }
         else if ($result == 0) echo json_encode(["Index", $mysqli->insert_id]);
         else echo json_encode(["Error", $mysqli->error]);
-    }
-    function checkL($array, $login)
-	{
-		for ($i = 0;  $i < count($array); $i++)
-			if($array[$i] == $login) return json_encode(["yes"]);
-		return json_encode(["no"]);
-    }
-    function recodeRights($_rights, $n)
-    {
-        $out = [];
-        for($i = 0; $i < $n; $i++)
-        {
-            $out[] = $_rights & 1;  
-            $_rights >>= 1;
-        }
-        return $out;
     }
     function checkRightsForTableTemplate($i, $login, $id) // Проверка прав на таблицы с шаблонами
     {
@@ -884,7 +782,7 @@
         if($Rights[$i] == 0) return false;
         return true;
     }
-    function getRightsForTable($table, $login, $id)
+    function getRightsForTable($table, $login, $id) // Проверка прав у таблицы
     {
         $Rights = [];
         if($result = query("SELECT rights FROM $table WHERE login = %s AND id_table = %i", [$login, $id]))
@@ -912,45 +810,5 @@
                 $out .= ",".(int)$row[0];
                 getAllChildrenForRemove((int)$row[0]);
             }
-    }
-    function getTasksPerFilter($filter)
-    {
-        global $paramL;
-        $out = [];
-        if($result = query("SELECT tasks.id, tasks.name, tasks.date_begin, tasks.dead_line, tasks.no_dead_line, tasks.status, tasks_people.login, tasks_people.role FROM tasks LEFT JOIN tasks_people ON (tasks.id = tasks_people.id_task) WHERE tasks.id IN (SELECT id_task FROM tasks_people WHERE login = %s AND role = '$filter') ORDER by tasks.id", [$paramL]))
-        while($row = $result->fetch_array(MYSQLI_NUM)) 
-        {
-            if(array_key_exists($row[0], $out) == false)
-                $out[$row[0]] = [$row[0], $row[1], "", "", $row[2], $row[4] == 1 ? "Без срока" : $row[3], $row[5]];
-            switch($row[7])
-            {
-                case "director":
-                    $out[$row[0]][2] = $row[6];
-                    break;
-                case "responsible":
-                    $out[$row[0]][3] = $row[6];
-                    break;
-                case "observer":
-                    break;
-            }
-        }
-        return $out;
-    }
-    function getExcelColumn($digest)
-    {
-        global $excelNumber, $countExcelNumber;
-        $digest++;
-        $result;
-        $str = "";
-        while(($digest != 0) || ($digest > $countExcelNumber)) {
-            if($digest % $countExcelNumber == 0) {
-                $str = $excelNumber[$countExcelNumber - 1].$str;
-                $digest--;
-            }
-            else $str = $excelNumber[$digest % $countExcelNumber - 1].$str;
-            $digest = (int)($digest / $countExcelNumber);
-        }
-        $result = $str;
-        return $result;
     }
 ?>				
